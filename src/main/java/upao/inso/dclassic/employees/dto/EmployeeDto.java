@@ -22,7 +22,6 @@ public class EmployeeDto extends PersonDto {
     @Positive
     private Double salary;
 
-    @Positive
     private Long jobId;
 
     @Enumerated(EnumType.STRING)

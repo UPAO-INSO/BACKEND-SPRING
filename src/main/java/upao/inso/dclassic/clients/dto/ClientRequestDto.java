@@ -7,7 +7,7 @@ import upao.inso.dclassic.persons.dto.PersonDto;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ClientDto extends PersonDto {
+public class ClientRequestDto extends PersonDto {
 
     @NotBlank
     private String email;

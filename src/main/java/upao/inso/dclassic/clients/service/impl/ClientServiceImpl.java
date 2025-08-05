@@ -4,7 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import upao.inso.dclassic.clients.dto.ClientDto;
+import upao.inso.dclassic.clients.dto.ClientRequestDto;
+import upao.inso.dclassic.clients.dto.ClientResponseDto;
 import upao.inso.dclassic.clients.mapper.ClientMapper;
 import upao.inso.dclassic.clients.model.ClientModel;
 import upao.inso.dclassic.clients.repository.IClientRepository;
@@ -23,16 +24,16 @@ public class ClientServiceImpl implements ClientService {
     private final ClientMapper clientMapper;
 
     @Override
-    public ClientModel create(ClientDto clientDto) {
-        ClientModel clientModel = clientMapper.toEntity(clientDto);
-        return this.clientRepository.save(clientModel);
+    public ClientResponseDto create(ClientRequestDto clientRequestDto) {
+        ClientModel clientModel = clientMapper.toModel(clientRequestDto);
+        return clientMapper.toDto(clientRepository.save(clientModel));
     }
 
     @Override
-    public PaginationResponseDto<ClientModel> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<ClientResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<ClientModel> entities = clientRepository.findAll(pageable);
-        final List<ClientModel> entitiesDto = entities.stream().toList();
+        final List<ClientResponseDto> entitiesDto = clientMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
                 entitiesDto,
                 entities.getTotalPages(),
@@ -44,22 +45,35 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientModel findById(Long id) {
+    public ClientResponseDto findById(Long id) {
+        ClientModel client = this.clientRepository
+                .findById(id)
+                .orElseThrow(() -> new NotFoundException("Client not found with id: " + id));
+        return clientMapper.toDto(client);
+    }
+
+    @Override
+    public ClientModel findModelById(Long id) {
         return this.clientRepository
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException("Client not found with id: " + id));
     }
 
     @Override
-    public ClientModel update(Long id, ClientDto clientDto) {
-        ClientModel client = this.findById(id);
+    public ClientResponseDto update(Long id, ClientRequestDto clientRequestDto) {
+        ClientModel client = this.findModelById(id);
 
-        client.setName(clientDto.getName());
-        client.setLastname(clientDto.getLastname());
-        client.setEmail(clientDto.getEmail());
-        client.setPhone(clientDto.getPhone());
+        client.setName(clientRequestDto.getName());
+        client.setLastname(clientRequestDto.getLastname());
+        client.setEmail(clientRequestDto.getEmail());
+        client.setPhone(clientRequestDto.getPhone());
 
-        return clientRepository.save(client);
+        return  clientMapper.toDto(clientRepository.save(client));
+    }
+
+    @Override
+    public ClientResponseDto partialUpdate(Long aLong, ClientResponseDto dto) {
+        return null;
     }
 
     @Override
@@ -68,23 +82,29 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientModel findByEmail(String email) {
-        return clientRepository
+    public ClientResponseDto findByEmail(String email) {
+        ClientModel client = clientRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Client not found with email: " + email));
+
+        return clientMapper.toDto(client);
     }
 
     @Override
-    public ClientModel findByPhone(String phone) {
-        return clientRepository
+    public ClientResponseDto findByPhone(String phone) {
+        ClientModel client = clientRepository
                 .findByPhone(phone)
                 .orElseThrow(() -> new NotFoundException("Client not found with phone: " + phone));
+
+        return clientMapper.toDto(client);
     }
 
     @Override
-    public ClientModel findByDocument(String document) {
-        return clientRepository
+    public ClientResponseDto findByDocument(String document) {
+        ClientModel client = clientRepository
                 .findByDocumentNumber(document)
                 .orElseThrow(() -> new NotFoundException("Client not found with document: " + document));
+
+        return clientMapper.toDto(client);
     }
 }

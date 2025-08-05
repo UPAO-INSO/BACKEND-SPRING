@@ -3,20 +3,48 @@ package upao.inso.dclassic.clients.mapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import upao.inso.dclassic.clients.dto.ClientDto;
+import upao.inso.dclassic.clients.dto.ClientRequestDto;
+import upao.inso.dclassic.clients.dto.ClientResponseDto;
 import upao.inso.dclassic.clients.model.ClientModel;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ClientMapper {
-    public ClientModel toEntity(ClientDto clientDto) {
+    public ClientModel toModel(ClientRequestDto clientRequestDto) {
         ClientModel entity = new ClientModel();
-        entity.setName(clientDto.getName());
-        entity.setLastname(clientDto.getLastname());
-        entity.setPhone(clientDto.getPhone());
-        entity.setEmail(clientDto.getEmail());
-        entity.setDocumentNumber(clientDto.getDocumentNumber());
+        entity.setName(clientRequestDto.getName());
+        entity.setLastname(clientRequestDto.getLastname());
+        entity.setPhone(clientRequestDto.getPhone());
+        entity.setEmail(clientRequestDto.getEmail());
+        entity.setDocumentNumber(clientRequestDto.getDocumentNumber());
         return entity;
+    }
+
+    public List<ClientModel> toModel(List<ClientRequestDto> clientRequestDtos) {
+        return clientRequestDtos.stream()
+                .map(this::toModel)
+                .toList();
+    }
+
+    public ClientResponseDto toDto(ClientModel clientModel) {
+        return ClientResponseDto.builder()
+                .id(clientModel.getId())
+                .name(clientModel.getName())
+                .lastname(clientModel.getLastname())
+                .email(clientModel.getEmail())
+                .phone(clientModel.getPhone())
+                .documentNumber(clientModel.getDocumentNumber())
+                .createdAt(clientModel.getCreatedAt())
+                .updatedAt(clientModel.getUpdatedAt())
+                .build();
+    }
+
+    public List<ClientResponseDto> toDto(List<ClientModel> clientModels) {
+        return clientModels.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

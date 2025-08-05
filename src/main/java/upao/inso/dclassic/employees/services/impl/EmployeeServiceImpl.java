@@ -14,6 +14,8 @@ import upao.inso.dclassic.employees.mapper.EmployeeMapper;
 import upao.inso.dclassic.employees.model.EmployeeModel;
 import upao.inso.dclassic.employees.repository.IEmployeeRepository;
 import upao.inso.dclassic.employees.services.EmployeeService;
+import upao.inso.dclassic.jobs.service.JobService;
+import upao.inso.dclassic.users.service.UserService;
 
 import java.util.List;
 
@@ -23,14 +25,19 @@ import java.util.List;
 public class EmployeeServiceImpl implements EmployeeService {
     private final IEmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
+    private final JobService jobService;
+    private final UserService userService;
 
     @Override
     @Transactional
     public EmployeeDto create(EmployeeDto employee) {
         EmployeeModel employeeModel = employeeMapper.toModel(employee);
-        EmployeeModel saved = employeeRepository.save(employeeModel);
 
-        return this.employeeMapper.toDto(saved);
+        employeeModel.setJob(jobService.findById(employee.getJobId()));
+        employeeModel.setUser(userService.findModelById(employee.getUserId()));
+//        EmployeeModel saved = employeeRepository.save(employeeModel);
+
+        return this.employeeMapper.toDto(employeeModel);
     }
 
     @Override

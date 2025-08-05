@@ -8,11 +8,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.Instant;
+
 @Data
 @SuperBuilder
 @AllArgsConstructor @NoArgsConstructor
 public class PersonDto {
-    @Positive
     private Long id;
 
     @NotBlank(message = "Name is required")
@@ -24,4 +25,8 @@ public class PersonDto {
     @NotBlank(message = "Phone is required")
     @Size(min =  12, max = 12)
     private String phone;
+
+    private Instant createdAt;
+
+    private Instant updatedAt;
 }

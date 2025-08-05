@@ -35,9 +35,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeeModel.setJob(jobService.findById(employee.getJobId()));
         employeeModel.setUser(userService.findModelById(employee.getUserId()));
-//        EmployeeModel saved = employeeRepository.save(employeeModel);
 
-        return this.employeeMapper.toDto(employeeModel);
+        return this.employeeMapper.toDto(employeeRepository.save(employeeModel));
     }
 
     @Override

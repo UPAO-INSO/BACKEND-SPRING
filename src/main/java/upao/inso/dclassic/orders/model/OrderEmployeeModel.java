@@ -19,9 +19,7 @@ public class OrderEmployeeModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    @CreationTimestamp
-    private Instant assignedAt;
+    private Integer minutesSpent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)

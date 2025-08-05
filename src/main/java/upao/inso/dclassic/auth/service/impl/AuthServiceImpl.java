@@ -7,8 +7,10 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import upao.inso.dclassic.auth.dto.AuthResponseDto;
 import upao.inso.dclassic.auth.dto.LoginDto;
 import upao.inso.dclassic.auth.dto.RefreshTokenRequestDto;
@@ -18,17 +20,19 @@ import upao.inso.dclassic.auth.model.TokenModel;
 import upao.inso.dclassic.auth.repository.ITokenRepository;
 import upao.inso.dclassic.auth.service.AuthService;
 import upao.inso.dclassic.auth.jwt.JwtService;
-import upao.inso.dclassic.employees.model.EmployeeModel;
+import upao.inso.dclassic.employees.dto.EmployeeDto;
 import upao.inso.dclassic.employees.services.EmployeeService;
 import upao.inso.dclassic.jobs.model.JobModel;
 import upao.inso.dclassic.jobs.service.impl.JobServiceImpl;
+import upao.inso.dclassic.users.dto.UserDto;
 import upao.inso.dclassic.users.enums.UserRole;
+import upao.inso.dclassic.users.mapper.UserMapper;
 import upao.inso.dclassic.users.model.UserModel;
+import upao.inso.dclassic.users.repository.IUserRepository;
 import upao.inso.dclassic.users.service.UserService;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -42,27 +46,35 @@ public class AuthServiceImpl implements AuthService {
     private final ITokenRepository tokenRepository;
     private final AuthenticationManager authenticationManager;
 
+    @Override
     public AuthResponseDto login(final LoginDto request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
 
-        UserModel user = this.userService.findByUsername(request.getUsername());
+            UserModel userModel = this.userService.findModelByUsername(request.getUsername());
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        user.setLastLogin(Instant.now());
-        AuthResponseDto tokens = jwtService.generateToken(authentication);
-        revokeAllUserTokens(user);
-        saveUserToken(user, tokens.accessToken());
-        return tokens;
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            userModel.setLastLogin(Instant.now());
+            AuthResponseDto tokens = jwtService.generateToken(authentication);
+
+            revokeAllUserTokens(userModel);
+            saveUserToken(userModel, tokens.accessToken());
+
+            return tokens;
+        } catch (RuntimeException e) {
+            log.error("Error during login: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid username or password");
+        }
     }
 
+    @Transactional
+    @Override
     public void register(final SignupDto request) {
-        log.info("Registering user: {}", request.getJobTitle());
-
         if(this.userService.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already exists");
         }
@@ -75,25 +87,27 @@ public class AuthServiceImpl implements AuthService {
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
-                .phone(request.getPhone())
                 .role(UserRole.USER)
+                .isActive(true)
                 .build();
 
+        this.userService.create(user);
+
+        log.info("Creating user: {}", user.toString());
+
         JobModel job = jobService.findByTitle(request.getJobTitle());
-        log.info("Job found: {}", job.getTitle());
         Double salary = jobService.getSalaryByJobTitle(job);
 
-        EmployeeModel employee = EmployeeModel.builder()
+        EmployeeDto employeeDto = EmployeeDto.builder()
                 .name(request.getUsername())
                 .lastname(request.getLastname())
                 .phone(request.getPhone())
                 .salary(salary)
-                .job(job)
-                .user(user)
+                .jobId(job.getId())
+                .userId(user.getId())
                 .build();
 
-        this.employeeService.create(employee);
-        this.userService.create(user);
+        this.employeeService.create(employeeDto);
     }
 
     private void saveUserToken(UserModel user, String jwtToken) {
@@ -127,7 +141,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         String username = jwtService.extractUsername(refreshToken);
-        UserModel user = this.userService.findByUsername(username);
+        UserModel user = userService.findModelByUsername(username);
 
         UsernamePasswordAuthenticationToken auth =
                 new UsernamePasswordAuthenticationToken(

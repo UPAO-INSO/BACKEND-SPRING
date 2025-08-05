@@ -6,9 +6,9 @@ import upao.inso.dclassic.orders.dto.OrderEmployeeDto;
 import upao.inso.dclassic.orders.model.OrderEmployeeModel;
 
 public interface OrderEmployeeService {
-    OrderEmployeeModel create(OrderEmployeeDto orderEmployee);
-    PaginationResponseDto<OrderEmployeeModel> findAll(PaginationRequestDto requestDto);
-    OrderEmployeeModel findById(Long id);
-    OrderEmployeeModel update(Long id, OrderEmployeeModel orderEmployee);
+    OrderEmployeeDto create(OrderEmployeeModel orderEmployee);
+    PaginationResponseDto<OrderEmployeeDto> findAll(PaginationRequestDto requestDto);
+    OrderEmployeeDto findById(Long id);
+    OrderEmployeeDto update(Long id, OrderEmployeeDto orderEmployee);
     void delete(Long id);
 }

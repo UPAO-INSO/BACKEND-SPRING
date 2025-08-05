@@ -28,10 +28,12 @@ public class ProductModel {
     private Double price;
 
     @Column(nullable = false)
-    private Boolean active;
+    @Builder.Default
+    private Boolean active = true;
 
     @Column(nullable = false)
-    private Boolean available;
+    @Builder.Default
+    private Boolean available = true;
 
     @ManyToOne
     @JoinColumn(name = "product_type_id", nullable = false)

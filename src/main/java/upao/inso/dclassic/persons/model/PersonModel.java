@@ -28,6 +28,9 @@ public class PersonModel {
     @Column(nullable = false, unique = true)
     private String phone;
 
+    @Column(nullable = false)
+    private Boolean active;
+
     @CreatedDate
     @Column(nullable = false)
     private Instant createdAt;

@@ -54,7 +54,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         if (order.getClientId() != null) {
-            ClientModel client = clientService.findById(order.getClientId());
+            ClientModel client = clientService.findModelById(order.getClientId());
             orderModel.setClient(client);
         }
 

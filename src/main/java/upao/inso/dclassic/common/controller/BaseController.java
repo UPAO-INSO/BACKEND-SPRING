@@ -3,6 +3,7 @@ package upao.inso.dclassic.common.controller;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import upao.inso.dclassic.clients.dto.ClientResponseDto;
 import upao.inso.dclassic.common.dto.PaginationRequestDto;
 import upao.inso.dclassic.common.dto.PaginationResponseDto;
 import upao.inso.dclassic.common.service.BaseService;
@@ -34,8 +35,6 @@ public abstract class BaseController<T, K, ID> {
     public ResponseEntity<K> partialUpdate(@PathVariable ID id, @RequestBody @Valid K type) {
         return ResponseEntity.ok(getService().partialUpdate(id, type));
     }
-
-    @PatchMapping
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> delete(@PathVariable ID id) {

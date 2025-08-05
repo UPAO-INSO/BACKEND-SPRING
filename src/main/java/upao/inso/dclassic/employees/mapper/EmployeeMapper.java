@@ -4,31 +4,21 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import upao.inso.dclassic.employees.dto.EmployeeDto;
 import upao.inso.dclassic.employees.model.EmployeeModel;
-import upao.inso.dclassic.jobs.model.JobModel;
-import upao.inso.dclassic.jobs.service.JobService;
-import upao.inso.dclassic.users.model.UserModel;
-import upao.inso.dclassic.users.service.UserService;
 
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class EmployeeMapper {
-    private final UserService userService;
-    private final JobService jobService;
-
     public EmployeeModel toModel(EmployeeDto employeeDto) {
         EmployeeModel employeeModel = new EmployeeModel();
-
-        JobModel job = jobService.findById(employeeDto.getJobId());
-        UserModel user = userService.findModelById(employeeDto.getUserId());
 
         employeeModel.setName(employeeDto.getName());
         employeeModel.setLastname(employeeDto.getLastname());
         employeeModel.setPhone(employeeDto.getPhone());
         employeeModel.setSalary(employeeDto.getSalary());
-        employeeModel.setJob(job);
-        employeeModel.setUser(user);
+        employeeModel.setJob(null);
+        employeeModel.setUser(null);
 
         return employeeModel;
     }
@@ -50,6 +40,8 @@ public class EmployeeMapper {
                 .jobName(employeeModel.getJob().getTitle())
                 .userId(employeeModel.getUser().getId())
                 .username(employeeModel.getUser().getUsername())
+                .createdAt(employeeModel.getCreatedAt())
+                .updatedAt(employeeModel.getUpdatedAt())
                 .build();
     }
 

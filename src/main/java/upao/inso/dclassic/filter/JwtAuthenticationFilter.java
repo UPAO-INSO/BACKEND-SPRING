@@ -1,5 +1,8 @@
 package upao.inso.dclassic.filter;
 
+import io.jsonwebtoken.ClaimJwtException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,50 +34,62 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final ITokenRepository tokenRepository;
 
     @Override
-    protected void doFilterInternal
-            (HttpServletRequest request,
-             @NonNull HttpServletResponse response,
-             @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+        try {
+            final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+            final String jwt;
+            final String username;
 
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        final String jwt;
-        final String username;
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        jwt = getJwtFromRequest(request);
-
-        TokenModel token = tokenRepository.findByToken(jwt)
-                .orElseThrow(() -> new IllegalArgumentException("Token not found"));
-
-        if(!jwtService.isValidToken(jwt) || jwtService.isRefreshToken(jwt)
-        || token.isRevoked() || token.isExpired()) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        username = jwtService.extractUsernameFromToken(jwt);
-
-        if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-            if(jwtService.validateTokenForUser(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                filterChain.doFilter(request, response);
+                return;
             }
+
+            jwt = getJwtFromRequest(request);
+
+            TokenModel token = tokenRepository.findByToken(jwt)
+                    .orElseThrow(() -> new IllegalArgumentException("Token not found"));
+
+            if(!jwtService.isValidToken(jwt) || jwtService.isRefreshToken(jwt)
+                    || token.isRevoked() || token.isExpired()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            username = jwtService.extractUsernameFromToken(jwt);
+
+            if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+                if(jwtService.validateTokenForUser(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+            filterChain.doFilter(request, response);
+        } catch (ExpiredJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"El token ha expirado. Por favor, vuelve a iniciar sesión.\"}");
+        } catch (ClaimJwtException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"Token con claims inválidos.\"}");
+        } catch (JwtException | IllegalArgumentException e) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"Token inválido o no autorizado.\"}");
         }
-        filterChain.doFilter(request, response);
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {

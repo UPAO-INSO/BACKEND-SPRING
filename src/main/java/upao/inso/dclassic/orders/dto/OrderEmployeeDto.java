@@ -1,12 +1,15 @@
 package upao.inso.dclassic.orders.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor @NoArgsConstructor
+@Builder
 public class OrderEmployeeDto {
+    private Long id;
     private Long orderId;
     private Long employeeId;
+    private Integer minutesSpent;
+    private String employeeName;
+    private String employeeLastname;
 }

@@ -4,12 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import upao.inso.dclassic.orders.model.OrderModel;
 import upao.inso.dclassic.persons.model.PersonModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@EntityListeners(AuditingEntityListener.class)
 @EqualsAndHashCode(callSuper = true)
 @Data @AllArgsConstructor @NoArgsConstructor
 @SuperBuilder
@@ -19,6 +21,9 @@ import java.util.List;
 public class ClientModel extends PersonModel {
     @Column(nullable = false)
     private String email;
+
+    @Column(nullable = false)
+    private String documentNumber;
 
     @Builder.Default
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

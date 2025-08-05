@@ -3,10 +3,12 @@ package upao.inso.dclassic.employees.model;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import upao.inso.dclassic.jobs.model.JobModel;
 import upao.inso.dclassic.persons.model.PersonModel;
 import upao.inso.dclassic.users.model.UserModel;
 
+@EntityListeners(AuditingEntityListener.class)
 @EqualsAndHashCode(callSuper = true)
 @Data @AllArgsConstructor @NoArgsConstructor
 @SuperBuilder

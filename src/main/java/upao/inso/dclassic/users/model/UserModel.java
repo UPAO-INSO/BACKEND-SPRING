@@ -37,9 +37,6 @@ public class UserModel implements UserDetails {
     @Column(nullable = false, length = 150)
     private String password;
 
-    @Column(length = 12)
-    private String phone;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private UserRole role;
@@ -49,12 +46,11 @@ public class UserModel implements UserDetails {
     private Instant createdAt;
 
     @Column(nullable = false)
+    @CreatedDate
     @LastModifiedDate
     private Instant updatedAt;
 
-    @Builder.Default
-    @Column(nullable = false)
-    private Instant lastLogin = Instant.now();
+    private Instant lastLogin;
 
     @Builder.Default
     @Column(nullable = false)
@@ -72,7 +68,7 @@ public class UserModel implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override

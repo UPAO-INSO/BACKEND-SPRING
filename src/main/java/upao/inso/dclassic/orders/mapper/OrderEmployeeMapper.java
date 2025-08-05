@@ -1,29 +1,40 @@
 package upao.inso.dclassic.orders.mapper;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import upao.inso.dclassic.employees.model.EmployeeModel;
-import upao.inso.dclassic.employees.repository.IEmployeeRepository;
 import upao.inso.dclassic.orders.dto.OrderEmployeeDto;
 import upao.inso.dclassic.orders.model.OrderEmployeeModel;
 import upao.inso.dclassic.orders.model.OrderModel;
-import upao.inso.dclassic.orders.repository.IOrderRepository;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class OrderEmployeeMapper {
-    private final IOrderRepository orderRepository;
-    private final IEmployeeRepository employeeRepository;
-
-    public OrderEmployeeModel toEntity(OrderEmployeeDto dto) {
-        OrderModel order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new IllegalArgumentException("Order not found with ID " + dto.getOrderId()));
-        EmployeeModel employee = employeeRepository.findById(dto.getEmployeeId())
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID " + dto.getEmployeeId()));
-
+    public OrderEmployeeModel toModel(OrderEmployeeDto dto, OrderModel order, EmployeeModel employee) {
         return OrderEmployeeModel.builder()
+                .minutesSpent(dto.getMinutesSpent() != null ? dto.getMinutesSpent() : 0)
                 .order(order)
                 .employee(employee)
                 .build();
+    }
+
+    public OrderEmployeeDto toDto(OrderEmployeeModel orderEmployee) {
+        return OrderEmployeeDto.builder()
+                .id(orderEmployee.getId())
+                .orderId(orderEmployee.getOrder().getId())
+                .employeeId(orderEmployee.getEmployee().getId())
+                .minutesSpent(orderEmployee.getMinutesSpent())
+                .employeeName(orderEmployee.getEmployee().getName())
+                .employeeLastname(orderEmployee.getEmployee().getLastname())
+                .build();
+    }
+
+    public List<OrderEmployeeDto> toDto(List<OrderEmployeeModel> ordersEmployee) {
+        return ordersEmployee.stream()
+                .map(this::toDto)
+                .toList();
     }
 }

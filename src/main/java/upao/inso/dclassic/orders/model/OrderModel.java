@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import upao.inso.dclassic.clients.model.ClientModel;
 import upao.inso.dclassic.orders.enums.OrderStatus;
 import upao.inso.dclassic.products.model.ProductOrderModel;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+@EntityListeners(AuditingEntityListener.class)
 @Data @NoArgsConstructor @AllArgsConstructor
 @Builder
 @Entity
@@ -26,14 +28,14 @@ public class OrderModel {
     private  Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "varchar(20) default 'PENDING'")
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @Column(nullable = false)
     private String comment;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean paid = false;
 
     @Column(nullable = false)
@@ -43,11 +45,11 @@ public class OrderModel {
     private Double totalPrice;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "table_id", nullable = false)
+    @JoinColumn(name = "table_id")
     private TableModel table;
 
     @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
+    @JoinColumn(name = "client_id")
     private ClientModel client;
 
     @Builder.Default

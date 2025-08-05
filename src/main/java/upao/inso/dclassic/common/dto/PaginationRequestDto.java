@@ -11,12 +11,16 @@ import org.springframework.data.domain.Sort;
 @SuperBuilder
 @NoArgsConstructor @AllArgsConstructor
 public class PaginationRequestDto {
+
     @Builder.Default
     private Integer page = 1;
+
     @Builder.Default
     private Integer size = 10;
+
     @Builder.Default
     private String sortField = "id";
+
     @Builder.Default
     private Sort.Direction direction = Sort.Direction.DESC;
 }

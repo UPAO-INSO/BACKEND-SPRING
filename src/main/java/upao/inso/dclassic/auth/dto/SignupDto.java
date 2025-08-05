@@ -32,7 +32,7 @@ public class SignupDto {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @ValidPassword
+    @ValidPassword()
     private String password;
 
     @Enumerated(EnumType.STRING)

@@ -1,4 +1,4 @@
-package upao.inso.dclassic.common.passay;
+package upao.inso.dclassic.common.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
@@ -21,20 +21,23 @@ public class PasswordConstraintValidator implements ConstraintValidator<ValidPas
     @Override
     public boolean isValid(String password, ConstraintValidatorContext context) {
         Properties props = new Properties();
+
         InputStream input = getClass()
                 .getClassLoader().getResourceAsStream("passay.properties");
         props.load(input);
-        PasswordValidator validator = getPasswordValidator(props);
 
+        PasswordValidator validator = getPasswordValidator(props);
         RuleResult result = validator.validate(new PasswordData(password));
 
         if (result.isValid()) return true;
 
         List<String> messages = validator.getMessages(result);
-        String messageTemplate = String.join(", ", messages);
-        context.buildConstraintViolationWithTemplate(messageTemplate)
-                .addConstraintViolation()
-                .disableDefaultConstraintViolation();
+
+        messages.forEach(msg -> {
+            context.buildConstraintViolationWithTemplate(msg)
+                    .addConstraintViolation();
+        });
+        context.disableDefaultConstraintViolation();
         return false;
     }
 

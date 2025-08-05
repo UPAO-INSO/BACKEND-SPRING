@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import upao.inso.dclassic.common.dto.PaginationRequestDto;
 import upao.inso.dclassic.common.dto.PaginationResponseDto;
 import upao.inso.dclassic.common.utils.PaginationUtils;
+import upao.inso.dclassic.employees.model.EmployeeModel;
 import upao.inso.dclassic.orders.dto.OrderEmployeeDto;
 import upao.inso.dclassic.orders.mapper.OrderEmployeeMapper;
 import upao.inso.dclassic.orders.model.OrderEmployeeModel;
@@ -22,18 +23,22 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     private final OrderEmployeeMapper orderEmployeeMapper;
 
     @Override
-    public OrderEmployeeModel create(OrderEmployeeDto orderEmployeeDto) {
-        OrderEmployeeModel model = orderEmployeeMapper.toEntity(orderEmployeeDto);
-        return orderEmployeeRepository.save(model);
+    public OrderEmployeeDto create(OrderEmployeeModel orderEmployee) {
+        return orderEmployeeMapper.toDto(orderEmployeeRepository.save(orderEmployee));
     }
 
     @Override
-    public PaginationResponseDto<OrderEmployeeModel> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<OrderEmployeeDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderEmployeeModel> entities = this.orderEmployeeRepository.findAll(pageable);
-        final List<OrderEmployeeModel> entitiesDto = entities.stream().toList();
+        final List<OrderEmployeeModel> orderEmployeeModels = entities.getContent();
+        List<Long> ordersId =  orderEmployeeModels.stream()
+                .map(orderEmployeeModel -> orderEmployeeModel.getOrder().getId())
+                .toList();
+
+        final List<OrderEmployeeDto> orderEmployeeDtos = orderEmployeeMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
-                entitiesDto,
+                orderEmployeeDtos,
                 entities.getTotalPages(),
                 entities.getTotalElements(),
                 entities.getSize(),
@@ -43,12 +48,12 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     }
 
     @Override
-    public OrderEmployeeModel findById(Long id) {
+    public OrderEmployeeDto findById(Long id) {
         return null;
     }
 
     @Override
-    public OrderEmployeeModel update(Long id, OrderEmployeeModel orderEmployee) {
+    public OrderEmployeeDto update(Long id, OrderEmployeeDto orderEmployee) {
         return null;
     }
 

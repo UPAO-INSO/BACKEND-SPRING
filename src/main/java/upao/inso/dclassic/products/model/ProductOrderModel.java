@@ -20,7 +20,7 @@ public class ProductOrderModel {
     private Integer quantity;
 
     @Column(nullable = false)
-    private Double priceUnit;
+    private Double unitPrice;
 
     @Column(nullable = false)
     private Double subtotal;

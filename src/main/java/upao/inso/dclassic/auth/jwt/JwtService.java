@@ -78,7 +78,7 @@ public class JwtService {
 
     public boolean isRefreshToken(String token) {
         Claims claims = extractAllClaims(token);
-        if(claims == null) {
+        if (claims == null) {
             return false;
         }
         return "refresh".equals(claims.get("tokenType"));
@@ -97,9 +97,7 @@ public class JwtService {
     public String extractUsernameFromToken(String token) {
         Claims claims = extractAllClaims(token);
 
-        log.info("Extracting username from token: {}", token);
-
-        if(claims != null) {
+        if (claims != null) {
             return claims.getSubject();
         }
         return null;
@@ -108,15 +106,11 @@ public class JwtService {
     private Claims extractAllClaims(String token) {
         Claims claims;
 
-        try {
-            claims = Jwts.parser()
-                    .verifyWith(getSignInKey())
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
-        } catch (JwtException | IllegalArgumentException e) {
-            throw new RuntimeException(e);
-        }
+        claims = Jwts.parser()
+                .verifyWith(getSignInKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
 
         return claims;
     }
@@ -149,6 +143,7 @@ public class JwtService {
                 .signWith(getSignInKey())
                 .compact();
     }
+
     public boolean isRefreshTokenValid(String token, UserDetails user) {
         return isRefreshToken(token) && isTokenExpired(token) && getUsernameFromToken(token).equals(user.getUsername());
     }

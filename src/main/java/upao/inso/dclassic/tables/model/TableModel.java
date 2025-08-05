@@ -20,12 +20,17 @@ public class TableModel {
     private String  number;
 
     @Column(nullable = false)
-    private String capacity;
+    private Integer capacity;
 
     @Column(nullable = false)
     private Integer floor;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isActive = true;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TableStatus status;
+    @Builder.Default
+    private TableStatus status = TableStatus.AVAILABLE;
 }

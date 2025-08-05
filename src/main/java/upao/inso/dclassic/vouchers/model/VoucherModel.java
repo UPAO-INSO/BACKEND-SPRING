@@ -31,44 +31,22 @@ public class VoucherModel {
     @Column(nullable = false)
     private VoucherType type;
 
-    private ClientTypeDocument clientTypeDocument;
-
-    private String clientDocumentNumber;
-
-    private String clientDenomination;
-
-    private String clientAddress;
-
-    private String clientEmail;
-
     private Instant issuedAt;
 
     private CurrencyType currency;
 
     private Double igvPercentage;
 
-    private Double totalWithoutIgv;
-
-    private Double totalIgv;
-
     private Double totalWithIgv;
 
     private String observations;
-
-    private Boolean sentToSunat;
-
-    private Boolean sentToClient;
 
     @Column(nullable = false)
     private VoucherStatus status;
 
     private String pdfUrl;
 
-    private String xmlUrl;
-
-    private String cdrUrl;
-
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_id", nullable = true)
+    @JoinColumn(name = "order_id")
     private OrderModel order;
 }

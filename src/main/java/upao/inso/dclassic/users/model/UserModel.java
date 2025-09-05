@@ -13,6 +13,7 @@ import upao.inso.dclassic.auth.model.TokenModel;
 import upao.inso.dclassic.employees.model.EmployeeModel;
 import upao.inso.dclassic.users.enums.UserRole;
 
+import java.lang.annotation.Documented;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;

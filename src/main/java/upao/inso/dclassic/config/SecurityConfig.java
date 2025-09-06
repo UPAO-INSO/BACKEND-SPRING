@@ -14,6 +14,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -46,6 +47,9 @@ public class SecurityConfig {
                                 .requestMatchers("/docs/**").permitAll()
                                 .anyRequest().authenticated()
                 )
+                .exceptionHandling(exception ->
+                        exception.accessDeniedHandler(customAccessDeniedHandler())
+                )
                 .sessionManagement(sessionManagement ->
                         sessionManagement
                                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -77,6 +81,15 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
         return source;
+    }
+
+    @Bean
+    public AccessDeniedHandler customAccessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\": \"Access renegade. No tienes permisos para acceder a este recurso.\"}");
+        };
     }
 
     private void logout(final String token) {

@@ -2,10 +2,12 @@ package upao.inso.dclassic.tables.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.Data;
 import upao.inso.dclassic.tables.enums.TableStatus;
 
 @Data
+@Builder
 public class TableDto {
 
     @NotBlank
@@ -18,8 +20,8 @@ public class TableDto {
     private Integer floor;
 
     @NotNull
-    private Boolean isActive = true;
+    private Boolean isActive;
 
     @NotNull
-    private TableStatus status = TableStatus.AVAILABLE;
+    private TableStatus status;
 }

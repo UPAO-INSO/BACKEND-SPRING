@@ -10,6 +10,7 @@ import upao.inso.dclassic.common.dto.PaginationResponseDto;
 import upao.inso.dclassic.common.utils.PaginationUtils;
 import upao.inso.dclassic.exceptions.NotFoundException;
 import upao.inso.dclassic.tables.dto.TableDto;
+import upao.inso.dclassic.tables.enums.TableStatus;
 import upao.inso.dclassic.tables.mapper.TableMapper;
 import upao.inso.dclassic.tables.model.TableModel;
 import upao.inso.dclassic.tables.repository.ITableRepository;
@@ -29,6 +30,21 @@ public class TableServiceImpl implements TableService {
     public PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<TableModel> entities = tableRepository.findAll(pageable);
+        final List<TableModel> entitiesDto = entities.stream().toList();
+        return new PaginationResponseDto<>(
+                entitiesDto,
+                entities.getTotalPages(),
+                entities.getTotalElements(),
+                entities.getSize(),
+                entities.getNumber() + 1,
+                entities.isEmpty()
+        );
+    }
+
+    @Override
+    public PaginationResponseDto<TableModel> findAllByStatus(PaginationRequestDto requestDto, TableStatus status) {
+        final Pageable pageable = PaginationUtils.getPageable(requestDto);
+        final Page<TableModel> entities = tableRepository.findAllByStatus(pageable, status);
         final List<TableModel> entitiesDto = entities.stream().toList();
         return new PaginationResponseDto<>(
                 entitiesDto,

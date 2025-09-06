@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import upao.inso.dclassic.common.dto.PaginationRequestDto;
 import upao.inso.dclassic.common.dto.PaginationResponseDto;
 import upao.inso.dclassic.tables.dto.TableDto;
+import upao.inso.dclassic.tables.enums.TableStatus;
 import upao.inso.dclassic.tables.model.TableModel;
 import upao.inso.dclassic.tables.service.TableService;
 
@@ -23,6 +24,12 @@ public class TableController {
     @GetMapping
     public PaginationResponseDto<TableModel> findAllOrders(@ModelAttribute PaginationRequestDto requestDto) {
         return tableService.findAll(requestDto);
+    }
+
+    @GetMapping("/filter-by")
+    public PaginationResponseDto<TableModel> findAllByStatus(@ModelAttribute PaginationRequestDto requestDto,
+                                                             @RequestParam("status") TableStatus status) {
+        return tableService.findAllByStatus(requestDto, status);
     }
 
     @PostMapping("/{id}")

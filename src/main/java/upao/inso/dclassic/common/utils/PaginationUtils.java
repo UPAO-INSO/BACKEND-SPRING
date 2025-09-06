@@ -10,6 +10,6 @@ import upao.inso.dclassic.common.dto.PaginationRequestDto;
 public class PaginationUtils {
     public static Pageable getPageable(PaginationRequestDto request) {
         int page = request.getPage() != null ? Math.max(request.getPage() - 1, 0) : 0;
-        return PageRequest.of(page, request.getSize(), request.getDirection(), request.getSortField());
+        return PageRequest.of(page, request.getLimit(), request.getDirection(), request.getSortField());
     }
 }

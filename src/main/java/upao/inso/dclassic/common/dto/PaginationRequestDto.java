@@ -16,7 +16,7 @@ public class PaginationRequestDto {
     private Integer page = 1;
 
     @Builder.Default
-    private Integer size = 10;
+    private Integer limit = 10;
 
     @Builder.Default
     private String sortField = "id";

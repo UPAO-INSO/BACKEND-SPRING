@@ -9,7 +9,10 @@ import upao.inso.dclassic.common.dto.PaginationRequestDto;
 import upao.inso.dclassic.common.dto.PaginationResponseDto;
 import upao.inso.dclassic.orders.dto.ChangeOrderStatusDto;
 import upao.inso.dclassic.orders.dto.OrderDto;
+import upao.inso.dclassic.orders.enums.OrderStatus;
 import upao.inso.dclassic.orders.service.OrderService;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -25,6 +28,12 @@ public class OrderController {
     @GetMapping
     public ResponseEntity<PaginationResponseDto<OrderDto>> findAll(@ModelAttribute PaginationRequestDto requestDto) {
         return ResponseEntity.ok(orderService.findAll(requestDto));
+    }
+
+    @GetMapping("/filter-by")
+    public ResponseEntity<List<OrderDto>> findAllByStatus(@ModelAttribute PaginationRequestDto requestDto,
+                                                                                 @RequestParam("status") OrderStatus status) {
+        return ResponseEntity.ok(orderService.findAllByOrderStatus(status));
     }
 
     @GetMapping("/{id}")

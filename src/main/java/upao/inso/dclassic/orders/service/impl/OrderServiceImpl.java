@@ -129,6 +129,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<OrderDto> findAllByOrderStatus(OrderStatus status) {
+        List<OrderModel> order = orderRepository
+                .findAllByOrderStatus(status)
+                .orElseThrow(() -> new NotFoundException("No orders found with status: " + status));
+
+        return orderMapper.toDto(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public OrderDto findById(Long id) {
         OrderModel order = orderRepository
                 .findById(id)

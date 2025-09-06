@@ -22,5 +22,5 @@ public class PaginationRequestDto {
     private String sortField = "id";
 
     @Builder.Default
-    private Sort.Direction direction = Sort.Direction.DESC;
+    private Sort.Direction direction = Sort.Direction.ASC;
 }

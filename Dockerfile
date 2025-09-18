@@ -12,7 +12,7 @@ RUN mvn clean package -DskipTests
 RUN ls -la /app/target
 
 # Etapa 2: Ejecución de la aplicación
-FROM openjdk:17-jdk-alpine
+FROM openjdk:17-jdk-slim
 
 WORKDIR /app
 

@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.controller.BaseController;
+import team.upao.dev.common.dto.PaginationRequestDto;
+import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.service.BaseService;
 import team.upao.dev.products.dto.ProductRequestDto;
 import team.upao.dev.products.dto.ProductResponseDto;
@@ -30,5 +32,10 @@ public class ProductController extends BaseController<ProductRequestDto, Product
     @GetMapping("/name-contains/{name}")
     public ResponseEntity<List<ProductResponseDto>> findByNameContaining(@PathVariable String name) {
         return ResponseEntity.ok(productService.findByNameContaining(name));
+    }
+
+    @GetMapping("/by-product-type/{productTypeId}")
+    public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(@PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
+        return ResponseEntity.ok(productService.findAllByProductTypeId(productTypeId, requestDto));
     }
 }

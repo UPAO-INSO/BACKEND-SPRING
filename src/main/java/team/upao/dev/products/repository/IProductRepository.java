@@ -51,4 +51,6 @@ public interface IProductRepository extends JpaRepository<ProductModel, Long> {
     @Query("update ProductModel p set p.available=:available where p.id=:id")
     @NonNull
     void updateAvailableById(@Param(value = "id") Long id, @Param(value = "available") Boolean available);
+
+    Page<ProductModel> findAllByProductTypeId(Long productTypeId, Pageable pageable);
 }

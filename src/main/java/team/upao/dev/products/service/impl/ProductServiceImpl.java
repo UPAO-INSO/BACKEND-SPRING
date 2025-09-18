@@ -47,6 +47,23 @@ public class ProductServiceImpl implements ProductService {
         );
     }
 
+    public PaginationResponseDto<ProductResponseDto> findAllByProductTypeId(Long productTypeId, PaginationRequestDto requestDto) {
+        final Pageable pageable = PaginationUtils.getPageable(requestDto);
+        final Page<ProductModel> entities = productRepository.findAllByProductTypeId(productTypeId, pageable);
+        final List<ProductResponseDto> productResponseDtos = productMapper.toDto(entities.getContent())
+                .stream()
+                .filter(p -> p.getActive() == true)
+                .toList();
+        return new PaginationResponseDto<>(
+                productResponseDtos,
+                entities.getTotalPages(),
+                entities.getTotalElements(),
+                entities.getSize(),
+                entities.getNumber() + 1,
+                entities.isEmpty()
+        );
+    }
+
     @Override
     public ProductResponseDto findByName(String name) {
         ProductModel product = productRepository

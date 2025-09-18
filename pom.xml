@@ -9,12 +9,12 @@
          <!-- 3.5.0 use the latest version of Spring Boot -->
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>upao.inso</groupId>
-    <artifactId>dclassic</artifactId>
+    <groupId>team.upao</groupId>
+    <artifactId>punto_de_sal</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>dclassic</name>
-    <description>Web system for the D'Classic restaurant, which allows the registration of orders and the monitoring of the sales process</description>
+    <name>punto_de_sal</name>
+    <description>Web system for the Punto de sal restaurant, which allows the registration of orders and the monitoring of the sales process</description>
     <url/>
     <licenses>
         <license/>

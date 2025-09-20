@@ -21,4 +21,6 @@ public class ProductOrderResponseDto {
     private Long orderId;
 
     private Long productId;
+
+    private String productName;
 }

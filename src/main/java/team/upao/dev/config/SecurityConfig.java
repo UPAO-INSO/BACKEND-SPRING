@@ -75,7 +75,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration= new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://9802dc90d874.ngrok-free.app"));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "PATCH"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of("Authorization","Content-Type", "ngrok-skip-browser-warning"));
         UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();

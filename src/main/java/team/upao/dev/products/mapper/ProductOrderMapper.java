@@ -35,6 +35,7 @@ public class ProductOrderMapper {
                 .subtotal(productOrderModel.getSubtotal())
                 .orderId(productOrderModel.getOrder().getId())
                 .productId(productOrderModel.getProduct().getId())
+                .productName(productOrderModel.getProduct().getName())
                 .build();
     }
 

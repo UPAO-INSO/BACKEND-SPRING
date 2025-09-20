@@ -146,6 +146,8 @@ public class AuthServiceImpl implements AuthService {
                         user.getAuthorities());
 
         String accessToken = jwtService.generateAccessToken(auth);
+        this.revokeAllUserTokens(user);
+        this.saveUserToken(user, accessToken);
         return new AuthResponseDto(accessToken, refreshToken);
     }
 }

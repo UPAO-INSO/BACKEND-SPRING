@@ -33,6 +33,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authProvider;
     private final ITokenRepository tokenRepository;
+    private final CustomAccessDeniedHandler customAccessDeniedHandler;
 
     @Bean
     public SecurityFilterChain authenticationSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -41,14 +42,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authRequest ->
                         authRequest
-                                .requestMatchers("/auth/**").permitAll()
+                                .requestMatchers("/auth/check-status").authenticated()
+                                .requestMatchers("/auth/private/**").authenticated()
+                                .requestMatchers("/auth/login", "/auth/register", "/auth/refresh-token").permitAll()
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/docs/swagger-config").permitAll()
                                 .requestMatchers("/docs/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception ->
-                        exception.accessDeniedHandler(customAccessDeniedHandler())
+                        exception.accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .sessionManagement(sessionManagement ->
                         sessionManagement
@@ -81,15 +84,6 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
         return source;
-    }
-
-    @Bean
-    public AccessDeniedHandler customAccessDeniedHandler() {
-        return (request, response, accessDeniedException) -> {
-            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-            response.setContentType("application/json");
-            response.getWriter().write("{\"message\": \"Access renegade. No tienes permisos para acceder a este recurso.\"}");
-        };
     }
 
     private void logout(final String token) {

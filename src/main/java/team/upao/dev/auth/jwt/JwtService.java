@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import team.upao.dev.auth.dto.AuthResponseDto;
+import team.upao.dev.auth.dto.TokensResponseDto;
 import team.upao.dev.users.model.UserModel;
 
 import javax.crypto.SecretKey;
@@ -30,11 +30,11 @@ public class JwtService {
     @Value("${jwt.refresh.token.expiration.time}")
     private Long jwtRefreshExpiration;
 
-    public AuthResponseDto generateToken(Authentication auth) {
+    public TokensResponseDto generateToken(Authentication auth) {
         String accessToken = generateAccessToken(auth);
         String refreshToken = generateRefreshToken(auth);
 
-        return new AuthResponseDto(accessToken, refreshToken);
+        return new TokensResponseDto(accessToken, refreshToken);
     }
 
     public String getUsernameFromToken(String token) {

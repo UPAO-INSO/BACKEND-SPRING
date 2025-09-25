@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Repository;
 import team.upao.dev.users.model.UserModel;
 
@@ -18,11 +17,16 @@ public interface IUserRepository extends JpaRepository<UserModel, Long> {
 
     @Modifying()
     @Query("update UserModel u set u.username=:username where u.id=:id")
-    @NonNull
     void updateUsernameById(@Param(value = "id") Long id, @Param(value = "username") String username);
 
     @Modifying()
     @Query("update UserModel u set u.email=:email where u.id=:id")
-    @NonNull
     void updateEmailById(@Param(value = "id") Long id, @Param(value = "email") String email);
+
+    @Query("SELECT CONCAT(p.name, ' ', p.lastname) as fullName " +
+            "FROM UserModel u " +
+            "LEFT JOIN EmployeeModel e ON e.user.id = u.id " +
+            "LEFT JOIN PersonModel p ON p.id = e.id " +
+            "WHERE u.username = :username")
+    Optional<String> findUserWithFullNameByUsername(@Param("username") String username);
 }

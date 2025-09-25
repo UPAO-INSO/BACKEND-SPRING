@@ -11,21 +11,30 @@ import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.exceptions.NotFoundException;
 import team.upao.dev.users.dto.UserDto;
-import team.upao.dev.users.mapper.UserMapper;
+import team.upao.dev.users.dto.UserResponseDto;
+import team.upao.dev.users.mapper.IUserMapper;
 import team.upao.dev.users.model.UserModel;
 import team.upao.dev.users.repository.IUserRepository;
 import team.upao.dev.users.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final IUserRepository userRepository;
-    private final UserMapper userMapper;
+    private final IUserMapper userMapper;
 
     @Override
-    public UserDto findById(Long id){
+    public String findByUsernameWithFullName(String username) {
+        Optional<String> result = userRepository.findUserWithFullNameByUsername(username);
+
+        return result.orElse("");
+    }
+
+    @Override
+    public UserResponseDto findById(Long id){
         UserModel user =  userRepository
                 .findById(id)
                 .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
@@ -41,7 +50,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto findByEmailOrUsername(String query) {
+    public UserResponseDto findByEmailOrUsername(String query) {
         UserModel user =  userRepository
                 .findByEmailOrUsername(query, query)
                 .orElseThrow(() -> new NotFoundException("User not found with email or username"));
@@ -50,7 +59,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto findByUsername(String username) {
+    public UserResponseDto findByUsername(String username) {
         UserModel user =  userRepository
                 .findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
@@ -66,7 +75,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto findByEmail(String email) {
+    public UserResponseDto findByEmail(String email) {
         UserModel user =  userRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
@@ -85,10 +94,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public PaginationResponseDto<UserDto> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<UserResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<UserModel> entities = userRepository.findAll(pageable);
-        final List<UserDto> userDtos = userMapper.toDto(entities.getContent());
+        List<UserResponseDto> userDtos = userMapper.toDto(entities.getContent());
+        userDtos.forEach(u -> {
+            String fullName = this.findByUsernameWithFullName(u.getUsername());
+            u.setFullName(fullName);
+        });
         return new PaginationResponseDto<>(
                 userDtos,
                 entities.getTotalPages(),
@@ -101,7 +114,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto create(UserDto userDto) {
+    public UserResponseDto create(UserDto userDto) {
         if (this.existsByUsername(userDto.getUsername())) {
             throw new NotFoundException("Username already exists: " + userDto.getUsername());
         }
@@ -127,7 +140,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto update(Long id, UserDto user) {
+    public UserResponseDto update(Long id, UserDto user) {
 
         UserModel userModel = findModelById(id);
 
@@ -143,7 +156,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserDto updateUsernameById(Long id, String username) {
+    public UserResponseDto updateUsernameById(Long id, String username) {
         UserModel user = findModelById(id);
 
         if (this.existsByUsername(username)) {
@@ -152,12 +165,13 @@ public class UserServiceImpl implements UserService {
 
         userRepository.updateUsernameById(id, username);
 
-        return userMapper.toDto(user);
+        UserResponseDto userResponseDto = userMapper.toDto(user);
+        return userResponseDto;
     }
 
     @Override
     @Transactional
-    public UserDto updateEmailById(Long id, String email) {
+    public UserResponseDto updateEmailById(Long id, String email) {
         UserModel user = findModelById(id);
 
         if (this.existsByEmail(email)) {
@@ -166,7 +180,8 @@ public class UserServiceImpl implements UserService {
 
         userRepository.updateEmailById(id, email);
 
-        return userMapper.toDto(user);
+        UserResponseDto userResponseDto = userMapper.toDto(user);
+        return userResponseDto;
     }
 
     @Override

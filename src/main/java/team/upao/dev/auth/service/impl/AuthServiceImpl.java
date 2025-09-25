@@ -10,10 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.upao.dev.auth.dto.AuthResponseDto;
-import team.upao.dev.auth.dto.LoginDto;
-import team.upao.dev.auth.dto.RefreshTokenRequestDto;
-import team.upao.dev.auth.dto.SignupDto;
+import team.upao.dev.auth.dto.*;
 import team.upao.dev.auth.enums.TokenType;
 import team.upao.dev.auth.model.TokenModel;
 import team.upao.dev.auth.repository.ITokenRepository;
@@ -23,7 +20,10 @@ import team.upao.dev.employees.dto.EmployeeDto;
 import team.upao.dev.employees.services.EmployeeService;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.service.impl.JobServiceImpl;
+import team.upao.dev.users.dto.UserDto;
+import team.upao.dev.users.dto.UserResponseDto;
 import team.upao.dev.users.enums.UserRole;
+import team.upao.dev.users.mapper.IUserMapper;
 import team.upao.dev.users.model.UserModel;
 import team.upao.dev.users.service.UserService;
 
@@ -35,6 +35,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
     private final UserService userService;
+    private final IUserMapper userMapper;
     private final EmployeeService employeeService;
     private final JobServiceImpl jobService;
     private final JwtService jwtService;
@@ -56,12 +57,15 @@ public class AuthServiceImpl implements AuthService {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             userModel.setLastLogin(Instant.now());
-            AuthResponseDto tokens = jwtService.generateToken(authentication);
+            TokensResponseDto tokens = jwtService.generateToken(authentication);
 
             revokeAllUserTokens(userModel);
             saveUserToken(userModel, tokens.accessToken());
 
-            return tokens;
+            UserResponseDto user = userMapper
+                    .toDtoWithFullName(userModel, userService.findByUsernameWithFullName(userModel.getUsername()));
+
+            return new AuthResponseDto(user, tokens);
         } catch (RuntimeException e) {
             log.error("Error during login: {}", e.getMessage());
             throw new IllegalArgumentException("Invalid username or password");
@@ -71,11 +75,11 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     @Override
     public void register(final SignupDto request) {
-        if(this.userService.existsByUsername(request.getUsername())) {
+        if (this.userService.existsByUsername(request.getUsername())) {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        if(this.userService.existsByEmail(request.getEmail())) {
+        if (this.userService.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("Email already exists");
         }
 
@@ -95,7 +99,7 @@ public class AuthServiceImpl implements AuthService {
         Double salary = jobService.getSalaryByJobTitle(job);
 
         EmployeeDto employeeDto = EmployeeDto.builder()
-                .name(request.getUsername())
+                .name(request.getName())
                 .lastname(request.getLastname())
                 .phone(request.getPhone())
                 .salary(salary)
@@ -105,6 +109,31 @@ public class AuthServiceImpl implements AuthService {
 
         this.employeeService.create(employeeDto);
     }
+
+    @Override
+    public AuthResponseDto checkAuthStatus(UserDto userDto) {
+        UserModel userModel = userService.findModelByUsername(userDto.getUsername());
+        if (userModel == null || !userModel.getIsActive()) {
+            throw new IllegalArgumentException("User is not active or does not exist");
+        }
+
+        UsernamePasswordAuthenticationToken auth =
+                new UsernamePasswordAuthenticationToken(
+                        userModel,
+                        null,
+                        userModel.getAuthorities()
+                );
+
+        TokensResponseDto tokens = jwtService.generateToken(auth);
+
+        revokeAllUserTokens(userModel);
+        saveUserToken(userModel, tokens.accessToken());
+
+        UserResponseDto user = userMapper.toDto(userModel);
+
+        return new AuthResponseDto(user, tokens);
+    }
+
 
     private void saveUserToken(UserModel user, String jwtToken) {
         TokenModel token = TokenModel.builder()
@@ -119,7 +148,7 @@ public class AuthServiceImpl implements AuthService {
 
     private void revokeAllUserTokens(UserModel user) {
         final List<TokenModel> tokens = tokenRepository.findAllByUser(user);
-        if(tokens.isEmpty()) {
+        if (tokens.isEmpty()) {
             return;
         }
         tokens.forEach(token -> {
@@ -129,10 +158,10 @@ public class AuthServiceImpl implements AuthService {
         tokenRepository.saveAll(tokens);
     }
 
-    public AuthResponseDto refreshToken(@Valid RefreshTokenRequestDto token) {
+    public TokensResponseDto refreshToken(@Valid RefreshTokenRequestDto token) {
         String refreshToken = token.getRefreshToken();
 
-        if(!jwtService.isRefreshToken(refreshToken)) {
+        if (!jwtService.isRefreshToken(refreshToken)) {
             throw new IllegalArgumentException("Invalid refresh token");
         }
 
@@ -148,6 +177,6 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(auth);
         this.revokeAllUserTokens(user);
         this.saveUserToken(user, accessToken);
-        return new AuthResponseDto(accessToken, refreshToken);
+        return new TokensResponseDto(accessToken, refreshToken);
     }
 }

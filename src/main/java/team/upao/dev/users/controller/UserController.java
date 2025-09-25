@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
+import team.upao.dev.persons.model.PersonModel;
 import team.upao.dev.users.dto.FindUserDto;
 import team.upao.dev.users.dto.UserDto;
+import team.upao.dev.users.dto.UserResponseDto;
 import team.upao.dev.users.service.UserService;
 
 @Slf4j
@@ -24,41 +26,46 @@ public class UserController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> create(@RequestBody @Valid UserDto user) {
+    public ResponseEntity<UserResponseDto> create(@RequestBody @Valid UserDto user) {
         return ResponseEntity.ok(this.userService.create(user));
     }
 
     @GetMapping
-    public ResponseEntity<PaginationResponseDto<UserDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto) {
+    public ResponseEntity<PaginationResponseDto<UserResponseDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto) {
        return ResponseEntity.ok(this.userService.findAll(requestDto));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> findById(@PathVariable Long id) {
+    public ResponseEntity<UserResponseDto> findById(@PathVariable Long id) {
         return ResponseEntity.ok(this.userService.findById(id));
     }
 
+    @GetMapping("/username/{username}")
+    public ResponseEntity<String> findPersonByUsername(@PathVariable String username) {
+        return ResponseEntity.ok(this.userService.findByUsernameWithFullName(username));
+    }
+
     @GetMapping("/find")
-    public ResponseEntity<UserDto> findByEmailOrUsername(@ModelAttribute @Valid FindUserDto findUserDto) {
+    public ResponseEntity<UserResponseDto> findByEmailOrUsername(@ModelAttribute @Valid FindUserDto findUserDto) {
         return ResponseEntity.ok(this.userService.findByEmailOrUsername(findUserDto.query()));
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> update(@PathVariable Long id, @RequestBody @Valid UserDto user) {
+    public ResponseEntity<UserResponseDto> update(@PathVariable Long id, @RequestBody @Valid UserDto user) {
         return ResponseEntity.ok(this.userService.update(id, user));
     }
 
     @PatchMapping("/username/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> updateUsernameById(@PathVariable Long id, @RequestParam String username) {
+    public ResponseEntity<UserResponseDto> updateUsernameById(@PathVariable Long id, @RequestParam String username) {
         return ResponseEntity.ok(this.userService.updateUsernameById(id, username));
     }
 
     @PatchMapping("email/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDto> updateEmailById(@PathVariable Long id, @RequestParam String email) {
+    public ResponseEntity<UserResponseDto> updateEmailById(@PathVariable Long id, @RequestParam String email) {
         return ResponseEntity.ok(this.userService.updateEmailById(id, email));
     }
 

@@ -1,4 +1,5 @@
 package team.upao.dev.auth.dto;
 
+import team.upao.dev.users.dto.UserResponseDto;
 
-public record AuthResponseDto(String accessToken, String refreshToken) {}
+public record AuthResponseDto(UserResponseDto user, TokensResponseDto tokens) {}

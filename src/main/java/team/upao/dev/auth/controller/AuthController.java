@@ -26,12 +26,21 @@ public class AuthController {
 
     @GetMapping("/check-status")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<AuthResponseDto> checkAuthStatus(Authentication authentication) {
+    public ResponseEntity<AuthResponseDto> checkAuthStatus(
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        String accessToken = "";
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            accessToken = authHeader.substring(7);
+        }
+
         UserDto userDto = UserDto.builder()
                 .username(authentication.getName())
                 .build();
 
-        AuthResponseDto authResponse = authService.checkAuthStatus(userDto);
+        AuthResponseDto authResponse = authService.checkAuthStatus(userDto, accessToken);
         return ResponseEntity.ok(authResponse);
     }
 
@@ -51,40 +60,40 @@ public class AuthController {
         return ResponseEntity.ok(authService.refreshToken(refreshToken));
     }
 
-    @GetMapping("/private")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Map<String, Object>> testingPrivateRoute(
-            Authentication authentication,
-            HttpServletRequest request) {
+//    @GetMapping("/private")
+//    @PreAuthorize("hasRole('USER')")
+//    public ResponseEntity<Map<String, Object>> testingPrivateRoute(
+//            Authentication authentication,
+//            HttpServletRequest request) {
+//
+//        UserDto userDto = UserDto.builder()
+//                .username(authentication.getName())
+//                .build();
+//
+//        AuthResponseDto authResponse = authService.checkAuthStatus(userDto);
+//
+//        Map<String, Object> response = Map.of(
+//                "ok", true,
+//                "message", "Hola Mundo Private",
+//                "user", authResponse.user(),
+//                "userEmail", authentication.getName()
+//        );
+//
+//        return ResponseEntity.ok(response);
+//    }
 
-        UserDto userDto = UserDto.builder()
-                .username(authentication.getName())
-                .build();
-
-        AuthResponseDto authResponse = authService.checkAuthStatus(userDto);
-
-        Map<String, Object> response = Map.of(
-                "ok", true,
-                "message", "Hola Mundo Private",
-                "user", authResponse.user(),
-                "userEmail", authentication.getName()
-        );
-
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/private2")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_USER')")
-    public ResponseEntity<Map<String, Object>> privateRoute2(Authentication authentication) {
-        UserDto userDto = UserDto.builder()
-                .username(authentication.getName())
-                .build();
-
-        AuthResponseDto authResponse = authService.checkAuthStatus(userDto);
-
-        return ResponseEntity.ok(Map.of(
-                "ok", true,
-                "user", authResponse.user()
-        ));
-    }
+//    @GetMapping("/private2")
+//    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_USER')")
+//    public ResponseEntity<Map<String, Object>> privateRoute2(Authentication authentication) {
+//        UserDto userDto = UserDto.builder()
+//                .username(authentication.getName())
+//                .build();
+//
+//        AuthResponseDto authResponse = authService.checkAuthStatus(userDto);
+//
+//        return ResponseEntity.ok(Map.of(
+//                "ok", true,
+//                "user", authResponse.user()
+//        ));
+//    }
 }

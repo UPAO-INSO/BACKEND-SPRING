@@ -7,5 +7,7 @@ public interface AuthService {
     AuthResponseDto login(LoginDto request);
     void register(SignupDto request);
     TokensResponseDto refreshToken(RefreshTokenRequestDto token);
-    AuthResponseDto checkAuthStatus(UserDto user);
+    AuthResponseDto checkAuthStatus(UserDto user, String accessToken);
+
+
 }

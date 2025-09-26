@@ -111,7 +111,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponseDto checkAuthStatus(UserDto userDto) {
+    public AuthResponseDto checkAuthStatus(UserDto userDto, String accessToken) {
         UserModel userModel = userService.findModelByUsername(userDto.getUsername());
         if (userModel == null || !userModel.getIsActive()) {
             throw new IllegalArgumentException("User is not active or does not exist");
@@ -124,16 +124,16 @@ public class AuthServiceImpl implements AuthService {
                         userModel.getAuthorities()
                 );
 
-        TokensResponseDto tokens = jwtService.generateToken(auth);
+        UserResponseDto user = userMapper
+                .toDtoWithFullName(userModel, userService.findByUsernameWithFullName(userModel.getUsername()));
 
-        revokeAllUserTokens(userModel);
-        saveUserToken(userModel, tokens.accessToken());
-
-        UserResponseDto user = userMapper.toDto(userModel);
+        TokensResponseDto tokens = TokensResponseDto.builder()
+                .accessToken(accessToken)
+                .refreshToken("")
+                .build();
 
         return new AuthResponseDto(user, tokens);
     }
-
 
     private void saveUserToken(UserModel user, String jwtToken) {
         TokenModel token = TokenModel.builder()

@@ -77,10 +77,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration= new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://9802dc90d874.ngrok-free.app"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://punto-de-sal.netlify.app"));
         configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "PATCH"));
         configuration.setAllowCredentials(true);
-        configuration.setAllowedHeaders(List.of("Authorization","Content-Type", "ngrok-skip-browser-warning"));
+        configuration.setAllowedHeaders(List.of("Authorization","Content-Type"));
         UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
         return source;

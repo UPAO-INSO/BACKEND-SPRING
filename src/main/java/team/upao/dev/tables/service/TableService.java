@@ -7,8 +7,7 @@ import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 
 public interface TableService {
-    PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto);
-    PaginationResponseDto<TableModel> findAllByStatus(PaginationRequestDto requestDto, TableStatus status);
+    PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto, TableStatus status);
     TableModel findById(Long id);
     TableModel findByNumber(String number);
     Boolean existsByNumber(String number);

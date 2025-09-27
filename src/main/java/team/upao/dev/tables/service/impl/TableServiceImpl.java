@@ -22,29 +22,20 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class TableServiceImpl implements TableService {
-
     private final ITableRepository tableRepository;
     private final TableMapper tableMapper;
 
     @Override
-    public PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto, TableStatus status) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
-        final Page<TableModel> entities = tableRepository.findAll(pageable);
-        final List<TableModel> entitiesDto = entities.stream().toList();
-        return new PaginationResponseDto<>(
-                entitiesDto,
-                entities.getTotalPages(),
-                entities.getTotalElements(),
-                entities.getSize(),
-                entities.getNumber() + 1,
-                entities.isEmpty()
-        );
-    }
+        final Page<TableModel> entities;
 
-    @Override
-    public PaginationResponseDto<TableModel> findAllByStatus(PaginationRequestDto requestDto, TableStatus status) {
-        final Pageable pageable = PaginationUtils.getPageable(requestDto);
-        final Page<TableModel> entities = tableRepository.findAllByStatus(pageable, status);
+        if (status != null) {
+            entities = tableRepository.findAllByStatus(pageable, status);
+        } else {
+            entities = tableRepository.findAll(pageable);
+        }
+
         final List<TableModel> entitiesDto = entities.stream().toList();
         return new PaginationResponseDto<>(
                 entitiesDto,

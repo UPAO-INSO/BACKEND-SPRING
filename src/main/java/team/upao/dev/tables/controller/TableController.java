@@ -22,14 +22,9 @@ public class TableController {
     }
 
     @GetMapping
-    public PaginationResponseDto<TableModel> findAllOrders(@ModelAttribute PaginationRequestDto requestDto) {
-        return tableService.findAll(requestDto);
-    }
-
-    @GetMapping("/filter-by")
-    public PaginationResponseDto<TableModel> findAllByStatus(@ModelAttribute PaginationRequestDto requestDto,
-                                                             @RequestParam("status") TableStatus status) {
-        return tableService.findAllByStatus(requestDto, status);
+    public PaginationResponseDto<TableModel> findAllOrders(@ModelAttribute PaginationRequestDto requestDto,
+                                                           @RequestParam(value = "status", required = false) TableStatus status) {
+        return tableService.findAll(requestDto, status);
     }
 
     @PostMapping("/{id}")

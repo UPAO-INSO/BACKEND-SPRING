@@ -27,14 +27,9 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto) {
-        return ResponseEntity.ok(orderService.findAll(requestDto));
-    }
-
-    @GetMapping("/filter-by")
-    public ResponseEntity<List<OrderDto>> findAllByStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                                                 @RequestParam("status") OrderStatus status) {
-        return ResponseEntity.ok(orderService.findAllByOrderStatus(status));
+    public ResponseEntity<PaginationResponseDto<OrderDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                  @RequestParam(value = "status", required = false) OrderStatus status) {
+        return ResponseEntity.ok(orderService.findAll(requestDto, status));
     }
 
     @PostMapping("/filter-array-status")

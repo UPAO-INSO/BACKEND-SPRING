@@ -12,9 +12,8 @@ import java.util.List;
 
 public interface OrderService {
     OrderDto create(OrderDto order);
-    PaginationResponseDto<OrderDto> findAll(PaginationRequestDto requestDto);
+    PaginationResponseDto<OrderDto> findAll(PaginationRequestDto requestDto, OrderStatus status);
     PaginationResponseDto<OrderDto> findAllByArrayStatus(PaginationRequestDto requestDto, List<OrderStatus> status);
-    List<OrderDto> findAllByOrderStatus(OrderStatus status);
     OrderDto findById(Long id);
     List<OrderDto> findByTableIds(List<Long> tableId);
     OrderModel findModelById(Long id);

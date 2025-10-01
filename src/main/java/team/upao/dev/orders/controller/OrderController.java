@@ -9,6 +9,7 @@ import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
 import team.upao.dev.orders.dto.OrderDto;
+import team.upao.dev.orders.dto.OrderFilterDto;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.orders.service.OrderService;
 
@@ -28,17 +29,24 @@ public class OrderController {
 
     @GetMapping
     public ResponseEntity<PaginationResponseDto<OrderDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                                  @RequestParam(value = "status", required = false) OrderStatus status) {
+                                                                   @RequestParam(value = "status", required = false) OrderStatus status) {
         return ResponseEntity.ok(orderService.findAll(requestDto, status));
     }
 
     @PostMapping("/filter-array-status")
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findAllByArrayStatus(@ModelAttribute @Valid  PaginationRequestDto requestDto,
-                                                                                 @RequestBody String[] status) {
+    public ResponseEntity<PaginationResponseDto<OrderDto>> findAllByArrayStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                                @RequestBody String[] status) {
         List<OrderStatus> statusList = Arrays.stream(status)
                 .map(OrderStatus::valueOf)
                 .toList();
         return ResponseEntity.ok(orderService.findAllByArrayStatus(requestDto, statusList));
+    }
+
+    @PostMapping("/filter-by-tables-and-status")
+    public ResponseEntity<PaginationResponseDto<OrderDto>> findAllByTablesAndStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                                    @RequestBody @Valid OrderFilterDto orderFilterDto) {
+        return ResponseEntity.ok(orderService
+                .findAllByTablesAndStatus(requestDto, orderFilterDto.getTableIds(), orderFilterDto.getOrderStatus()));
     }
 
     @GetMapping("/{id}")

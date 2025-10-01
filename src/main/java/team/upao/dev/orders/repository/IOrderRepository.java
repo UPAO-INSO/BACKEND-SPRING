@@ -12,7 +12,8 @@ import java.util.Optional;
 
 @Repository
 public interface IOrderRepository extends JpaRepository<OrderModel, Long> {
-    Optional<List<OrderModel>> findAllByOrderStatus(OrderStatus orderStatus);
+    Page<OrderModel> findAllByOrderStatus(Pageable pageable, OrderStatus status);
     Page<OrderModel> findAllByOrderStatusIn(Pageable pageable, List<OrderStatus> orderStatuses);
+    Page<OrderModel> findAllByTableIdInAndOrderStatusIn(Pageable pageable, List<Long> tableIds, List<OrderStatus> orderStatuses);
     Optional<List<OrderModel>> findByTableIdIn(List<Long> tableIds);
 }

@@ -112,9 +112,16 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PaginationResponseDto<OrderDto> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<OrderDto> findAll(PaginationRequestDto requestDto, OrderStatus status) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
-        final Page<OrderModel> entities = orderRepository.findAll(pageable);
+        final Page<OrderModel> entities;
+
+        if (status != null) {
+            entities = orderRepository.findAllByOrderStatus(pageable, status);
+        } else {
+            entities = orderRepository.findAll(pageable);
+        }
+
         final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
                 orderDtos,
@@ -130,11 +137,12 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public PaginationResponseDto<OrderDto> findAllByArrayStatus(PaginationRequestDto requestDto,
                                                                 List<OrderStatus> ordersStatus) {
+        System.out.println(requestDto);
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderModel> entities = orderRepository.findAllByOrderStatusIn(pageable, ordersStatus);
         final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
-                filterOrdersByStatus(orderDtos),
+                orderDtos,
                 entities.getTotalPages(),
                 entities.getTotalElements(),
                 entities.getSize(),
@@ -143,23 +151,22 @@ public class OrderServiceImpl implements OrderService {
         );
     }
 
-    private List<OrderDto> filterOrdersByStatus(List<OrderDto> orders) {
-        return orders.stream()
-                .filter(order ->
-                        order.getOrderStatus() == OrderStatus.PENDING ||
-                                order.getOrderStatus() == OrderStatus.PREPARING ||
-                                order.getOrderStatus() == OrderStatus.READY)
-                .toList();
-    }
-
     @Override
     @Transactional(readOnly = true)
-    public List<OrderDto> findAllByOrderStatus(OrderStatus status) {
-        List<OrderModel> order = orderRepository
-                .findAllByOrderStatus(status)
-                .orElseThrow(() -> new NotFoundException("No orders found with status: " + status));
-
-        return orderMapper.toDto(order);
+    public PaginationResponseDto<OrderDto> findAllByTablesAndStatus(PaginationRequestDto requestDto,
+                                                                   List<Long> tableIds,
+                                                                   List<OrderStatus> ordersStatus) {
+        final Pageable pageable = PaginationUtils.getPageable(requestDto);
+        final Page<OrderModel> entities = orderRepository.findAllByTableIdInAndOrderStatusIn(pageable, tableIds, ordersStatus);
+        final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
+        return new PaginationResponseDto<>(
+                orderDtos,
+                entities.getTotalPages(),
+                entities.getTotalElements(),
+                entities.getSize(),
+                entities.getNumber() + 1,
+                entities.isEmpty()
+        );
     }
 
     @Override

@@ -141,7 +141,6 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public PaginationResponseDto<OrderDto> findAllByArrayStatus(PaginationRequestDto requestDto,
                                                                 List<OrderStatus> ordersStatus) {
-        System.out.println(requestDto);
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderModel> entities = orderRepository.findAllByOrderStatusIn(pageable, ordersStatus);
         final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());

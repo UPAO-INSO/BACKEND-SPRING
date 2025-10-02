@@ -17,13 +17,14 @@ public class OrderDto {
 
     private OrderStatus orderStatus;
 
-    @NotBlank
     private String comment;
 
     private Boolean paid;
 
+    @NotNull
     private Long tableId;
 
+    @NotNull
     private Long clientId;
 
     private Integer totalItems;

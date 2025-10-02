@@ -96,7 +96,12 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
-    public TableModel changeStatus(Long id, String status) {
-        return null;
+    public TableModel changeStatus(Long id, TableStatus status) {
+        TableModel table = findById(id);
+
+        table.setStatus(status);
+        tableRepository.save(table);
+
+        return table;
     }
 }

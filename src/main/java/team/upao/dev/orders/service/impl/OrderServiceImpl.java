@@ -25,6 +25,7 @@ import team.upao.dev.orders.service.OrderService;
 import team.upao.dev.products.model.ProductModel;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.products.service.ProductService;
+import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 import team.upao.dev.tables.service.TableService;
 
@@ -105,6 +106,9 @@ public class OrderServiceImpl implements OrderService {
 
         orderEmployeeModel.forEach(orderEmployee -> orderEmployee.setOrder(orderModel));
 
+        TableModel table = tableService.findById(orderModel.getTable().getId());
+
+        this.tableService.changeStatus(table.getId(), TableStatus.OCCUPIED);
         OrderModel saved = orderRepository.save(orderModel);
 
         return orderMapper.toDto(saved);
@@ -223,6 +227,8 @@ public class OrderServiceImpl implements OrderService {
             order.setPaid(true);
             order.setPaidAt(Instant.now());
             return orderMapper.toDto(orderRepository.save(order));
+        } else if (newStatus.equals(OrderStatus.COMPLETED)) {
+            tableService.changeStatus(order.getTable().getId() , TableStatus.AVAILABLE);
         }
 
         order.setOrderStatus(newStatus);

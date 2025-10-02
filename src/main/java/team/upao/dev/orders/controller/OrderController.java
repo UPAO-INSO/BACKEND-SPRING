@@ -22,8 +22,9 @@ import java.util.List;
 public class OrderController {
     private final OrderService orderService;
 
-    @PostMapping()
+    @PostMapping
     public ResponseEntity<OrderDto> create(@RequestBody @Valid OrderDto order) {
+        System.out.println("Order: " + order);
         return ResponseEntity.ok(orderService.create(order));
     }
 

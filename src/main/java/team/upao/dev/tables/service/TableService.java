@@ -14,6 +14,5 @@ public interface TableService {
     TableModel create(TableDto table);
     TableModel update(Long id, TableDto table);
     String delete(Long id);
-    TableModel changeStatus(Long id, String status);
-
+    TableModel changeStatus(Long id, TableStatus status);
 }

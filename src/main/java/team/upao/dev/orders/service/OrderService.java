@@ -17,6 +17,7 @@ public interface OrderService {
     PaginationResponseDto<OrderDto> findAllByTablesAndStatus(PaginationRequestDto requestDto, List<Long> tableIds, List<OrderStatus> status);
     OrderDto findById(Long id);
     List<OrderDto> findByTableIds(List<Long> tableId);
+    PaginationResponseDto<OrderDto> findAllByTableId(PaginationRequestDto requestDto, Long tableId);
     OrderModel findModelById(Long id);
     OrderDto update(Long id, OrderDto order);
     OrderDto changeStatus(@NonNull ChangeOrderStatusDto changeOrderStatusDto);

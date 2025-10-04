@@ -174,6 +174,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    public PaginationResponseDto<OrderDto> findAllByTableId(PaginationRequestDto requestDto, Long tableId) {
+        final Pageable pageable = PaginationUtils.getPageable(requestDto);
+        final Page<OrderModel> entities = orderRepository.findAllByTableId(pageable, tableId);
+        final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
+        return new PaginationResponseDto<>(
+                orderDtos,
+                entities.getTotalPages(),
+                entities.getTotalElements(),
+                entities.getSize(),
+                entities.getNumber() + 1,
+                entities.isEmpty()
+        );
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public OrderDto findById(Long id) {
         OrderModel order = orderRepository
                 .findById(id)

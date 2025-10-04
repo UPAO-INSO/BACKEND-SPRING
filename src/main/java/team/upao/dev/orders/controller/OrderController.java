@@ -54,8 +54,14 @@ public class OrderController {
         return ResponseEntity.ok(orderService.findById(id));
     }
 
+    @GetMapping("/by-tableId/{tableId}")
+    public ResponseEntity<PaginationResponseDto<OrderDto>> findByTableId(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                        @PathVariable Long tableId) {
+        return ResponseEntity.ok(orderService.findAllByTableId(requestDto, tableId));
+    }
+
     @PostMapping("/tables")
-    public ResponseEntity<List<OrderDto>> findByTableId(@RequestBody Long[] tableIds) {
+    public ResponseEntity<List<OrderDto>> findByTableIds(@RequestBody Long[] tableIds) {
         List<Long> ids = List.of(tableIds);
         return ResponseEntity.ok(orderService.findByTableIds(ids));
     }

@@ -42,6 +42,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authRequest ->
                         authRequest
+                                .requestMatchers("/ws/**").permitAll()
                                 .requestMatchers("/auth/check-status").authenticated()
                                 .requestMatchers("/auth/private/**").authenticated()
                                 .requestMatchers("/auth/login", "/auth/register", "/auth/refresh-token").permitAll()
@@ -78,9 +79,18 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration= new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://punto-de-sal.netlify.app"));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "PATCH"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowCredentials(true);
-        configuration.setAllowedHeaders(List.of("Authorization","Content-Type", "ngrok-skip-browser-warning"));
+        configuration.setAllowedHeaders(List.of(
+                "Authorization",
+                "Content-Type",
+                "ngrok-skip-browser-warning",
+                "Access-Control-Allow-Origin",
+                "Access-Control-Allow-Credentials",
+                "Access-Control-Allow-Headers",
+                "Access-Control-Request-Headers",
+                "Access-Control-Request-Method"
+        ));
         UrlBasedCorsConfigurationSource source= new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
         return source;

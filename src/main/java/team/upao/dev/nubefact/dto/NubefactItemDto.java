@@ -25,7 +25,7 @@ public class NubefactItemDto {
     private Integer tipoDeIgv;
     private Double igv;
     private Double total;
-    private Boolean anticipoRegularizacion = false; // Optional
+    private final Boolean anticipoRegularizacion = false; // Optional
     private String anticipoDocumentoSerie; // Optional
     private String anticipoDocumentoNumero; // Optional
 }

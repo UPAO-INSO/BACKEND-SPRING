@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 @SpringBootApplication
 @EnableJpaAuditing
 @OpenAPIDefinition
-public class DclassicApplication {
+public class PuntoDeSalApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(DclassicApplication.class, args);
+        SpringApplication.run(PuntoDeSalApplication.class, args);
     }
 
 }

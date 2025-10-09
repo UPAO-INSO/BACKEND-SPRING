@@ -157,8 +157,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public PaginationResponseDto<OrderDto> findAllByTablesAndStatus(PaginationRequestDto requestDto,
-                                                                   List<Long> tableIds,
-                                                                   List<OrderStatus> ordersStatus) {
+                                                                    List<Long> tableIds,
+                                                                    List<OrderStatus> ordersStatus) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderModel> entities = orderRepository.findAllByTableIdInAndOrderStatusIn(pageable, tableIds, ordersStatus);
         final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
@@ -177,7 +177,9 @@ public class OrderServiceImpl implements OrderService {
     public PaginationResponseDto<OrderDto> findAllByTableId(PaginationRequestDto requestDto, Long tableId) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderModel> entities = orderRepository.findAllByTableId(pageable, tableId);
-        final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent());
+        final List<OrderDto> orderDtos = orderMapper.toDto(entities.getContent()).stream()
+                .filter(order -> !order.getOrderStatus().equals(OrderStatus.COMPLETED) &&
+                                !order.getOrderStatus().equals(OrderStatus.CANCELLED)).toList();
         return new PaginationResponseDto<>(
                 orderDtos,
                 entities.getTotalPages(),
@@ -243,7 +245,7 @@ public class OrderServiceImpl implements OrderService {
             order.setPaidAt(Instant.now());
             return orderMapper.toDto(orderRepository.save(order));
         } else if (newStatus.equals(OrderStatus.COMPLETED)) {
-            tableService.changeStatus(order.getTable().getId() , TableStatus.AVAILABLE);
+            tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
         }
 
         order.setOrderStatus(newStatus);

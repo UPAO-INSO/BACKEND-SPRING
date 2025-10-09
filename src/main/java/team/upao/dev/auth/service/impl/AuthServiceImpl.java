@@ -18,6 +18,7 @@ import team.upao.dev.auth.service.AuthService;
 import team.upao.dev.auth.jwt.JwtService;
 import team.upao.dev.employees.dto.EmployeeDto;
 import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.service.impl.JobServiceImpl;
 import team.upao.dev.users.dto.UserDto;
@@ -44,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
 
     @Override
+    @Transactional
     public AuthResponseDto login(final LoginDto request) {
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -62,8 +64,11 @@ public class AuthServiceImpl implements AuthService {
             revokeAllUserTokens(userModel);
             saveUserToken(userModel, tokens.accessToken());
 
-            UserResponseDto user = userMapper
-                    .toDtoWithFullName(userModel, userService.findByUsernameWithFullName(userModel.getUsername()));
+            EmployeeDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
+            JobEnum jobTitle = employee != null ? employee.getJobName() : null;
+
+            String fullName = userService.findByUsernameWithFullName(userModel.getUsername());
+            UserResponseDto user = userMapper.toDtoWithFullNameAndJobTitle(userModel, fullName, jobTitle);
 
             return new AuthResponseDto(user, tokens);
         } catch (RuntimeException e) {
@@ -111,6 +116,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public AuthResponseDto checkAuthStatus(UserDto userDto, String accessToken) {
         UserModel userModel = userService.findModelByUsername(userDto.getUsername());
         if (userModel == null || !userModel.getIsActive()) {
@@ -124,8 +130,11 @@ public class AuthServiceImpl implements AuthService {
                         userModel.getAuthorities()
                 );
 
-        UserResponseDto user = userMapper
-                .toDtoWithFullName(userModel, userService.findByUsernameWithFullName(userModel.getUsername()));
+        EmployeeDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
+        JobEnum jobTitle = employee != null ? employee.getJobName() : null;
+
+        String fullName = userService.findByUsernameWithFullName(userModel.getUsername());
+        UserResponseDto user = userMapper.toDtoWithFullNameAndJobTitle(userModel, fullName, jobTitle);
 
         TokensResponseDto tokens = TokensResponseDto.builder()
                 .accessToken(accessToken)

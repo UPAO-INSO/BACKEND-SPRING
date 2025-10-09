@@ -2,6 +2,7 @@ package team.upao.dev.users.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.users.dto.UserDto;
 import team.upao.dev.users.dto.UserResponseDto;
 import team.upao.dev.users.model.UserModel;
@@ -14,7 +15,8 @@ public interface IUserMapper {
     List<UserResponseDto> toDto(List<UserModel> users);
 
     @Mapping(target = "fullName", source = "fullName")
-    UserResponseDto toDtoWithFullName(UserModel user, String fullName);
+    @Mapping(target = "jobTitle", source = "jobTitle")
+    UserResponseDto toDtoWithFullNameAndJobTitle(UserModel user, String fullName, JobEnum jobTitle);
 
     UserModel toModel(UserDto dto);
 }

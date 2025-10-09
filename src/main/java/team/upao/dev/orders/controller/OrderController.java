@@ -74,6 +74,7 @@ public class OrderController {
 
     @PatchMapping("/status")
     public ResponseEntity<OrderDto> changeStatus(@RequestBody @Valid ChangeOrderStatusDto order) {
+        System.out.println(order);
         return ResponseEntity.ok(orderService.changeStatus(order));
     }
 

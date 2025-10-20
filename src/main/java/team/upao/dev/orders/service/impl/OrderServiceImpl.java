@@ -29,8 +29,11 @@ import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 import team.upao.dev.tables.service.TableService;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +45,56 @@ public class OrderServiceImpl implements OrderService {
     private final ClientService clientService;
     private final ProductService productService;
     private final EmployeeService employeeService;
+
+    public double calculateOrderPrice(List<ProductModel> products) {
+        // Separar productos por categoría
+        List<ProductModel> segundos = products.stream()
+                .filter(p -> p.getProductType().getName().equals("SEGUNDOS"))
+                .collect(Collectors.toList());
+
+        List<ProductModel> entradas = products.stream()
+                .filter(p -> p.getProductType().getName().equals("ENTRADAS"))
+                .collect(Collectors.toList());
+
+        List<ProductModel> otros = products.stream()
+                .filter(p -> {
+                    String name = p.getProductType().getName();
+                    return !name.equals("SEGUNDOS") && !name.equals("ENTRADAS");
+                })
+                .collect(Collectors.toList());
+
+        // Calcular precio total
+        return calculateTotal(segundos, entradas, otros);
+    }
+
+    private double calculateTotal(List<ProductModel> segundos,
+                                  List<ProductModel> entradas,
+                                  List<ProductModel> otros) {
+        double total = 0.0;
+
+        // Sumar precio de los segundos (incluyen entrada gratis)
+        total += segundos.stream()
+                .mapToDouble(p -> p.getPrice() == null ? 0.0 : p.getPrice().doubleValue())
+                .sum();
+
+        // Calcular entradas que se cobran por separado
+        int entradasGratis = segundos.size();
+        int entradasACobrar = Math.max(0, entradas.size() - entradasGratis);
+
+        if (entradasACobrar > 0) {
+            total += entradas.stream()
+                    .limit(entradasACobrar)
+                    .mapToDouble(p -> p.getPrice() == null ? 0.0 : p.getPrice().doubleValue())
+                    .sum();
+        }
+
+        // Sumar otros productos
+        total += otros.stream()
+                .mapToDouble(p -> p.getPrice() == null ? 0.0 : p.getPrice().doubleValue())
+                .sum();
+
+        return total;
+    }
 
     @Override
     @Transactional
@@ -91,15 +144,8 @@ public class OrderServiceImpl implements OrderService {
                 .mapToInt(ProductOrderModel::getQuantity)
                 .sum();
 
-        double totalPrice = orderModel
-                .getProductOrders()
-                .stream()
-                .mapToDouble(ProductOrderModel::getSubtotal)
-                .sum();
-
         orderModel.setOrderStatus(OrderStatus.PENDING);
         orderModel.setTotalItems(totalItems);
-        orderModel.setTotalPrice(totalPrice);
         orderModel.setPaid(order.getPaid() != null ? order.getPaid() : false);
 
         productOrderModel.forEach(productOrder -> productOrder.setOrder(orderModel));
@@ -109,6 +155,18 @@ public class OrderServiceImpl implements OrderService {
         TableModel table = tableService.findById(orderModel.getTable().getId());
 
         this.tableService.changeStatus(table.getId(), TableStatus.OCCUPIED);
+
+        List<ProductModel> products = orderModel.getProductOrders()
+                .stream()
+                .map(ProductOrderModel::getProduct)
+                .toList();
+
+//        System.out.println(Arrays.toString(products.toArray()));
+
+        double totalPrice = this.calculateOrderPrice(products);
+
+        orderModel.setTotalPrice(totalPrice);
+
         OrderModel saved = orderRepository.save(orderModel);
 
         return orderMapper.toDto(saved);

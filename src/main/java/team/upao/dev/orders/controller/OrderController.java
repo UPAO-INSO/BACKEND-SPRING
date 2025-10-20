@@ -24,6 +24,7 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<OrderDto> create(@RequestBody @Valid OrderDto order) {
+        System.out.println(order);
         return ResponseEntity.ok(orderService.create(order));
     }
 
@@ -74,7 +75,6 @@ public class OrderController {
 
     @PatchMapping("/status")
     public ResponseEntity<OrderDto> changeStatus(@RequestBody @Valid ChangeOrderStatusDto order) {
-        System.out.println(order);
         return ResponseEntity.ok(orderService.changeStatus(order));
     }
 

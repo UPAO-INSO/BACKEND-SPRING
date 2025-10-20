@@ -1,5 +1,6 @@
 package team.upao.dev.orders.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ public class OrderEmployeeModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonBackReference("order-employees")
     private OrderModel order;
 
     @ManyToOne(fetch = FetchType.LAZY)

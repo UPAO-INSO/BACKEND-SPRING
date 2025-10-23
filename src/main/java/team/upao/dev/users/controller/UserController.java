@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
+import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.persons.model.PersonModel;
 import team.upao.dev.users.dto.FindUserDto;
 import team.upao.dev.users.dto.UserDto;
@@ -41,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/username/{username}")
-    public ResponseEntity<String> findPersonByUsername(@PathVariable String username) {
+    public ResponseEntity<PersonByFullName> findPersonByUsername(@PathVariable String username) {
         return ResponseEntity.ok(this.userService.findByUsernameWithFullName(username));
     }
 

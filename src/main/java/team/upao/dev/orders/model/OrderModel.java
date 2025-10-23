@@ -49,10 +49,6 @@ public class OrderModel {
     @JoinColumn(name = "table_id")
     private TableModel table;
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "client_id")
-    private ClientModel client;
-
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference("order-productOrders")

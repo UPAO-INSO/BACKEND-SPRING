@@ -24,9 +24,6 @@ public class OrderDto {
     @NotNull
     private Long tableId;
 
-    @NotNull
-    private Long clientId;
-
     private Integer totalItems;
 
     private Double totalPrice;

@@ -10,6 +10,7 @@ import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.users.dto.UserDto;
 import team.upao.dev.users.dto.UserResponseDto;
 import team.upao.dev.users.mapper.IUserMapper;
@@ -26,11 +27,25 @@ public class UserServiceImpl implements UserService {
     private final IUserRepository userRepository;
     private final IUserMapper userMapper;
 
-    @Override
-    public String findByUsernameWithFullName(String username) {
-        Optional<String> result = userRepository.findUserWithFullNameByUsername(username);
+    private PersonByFullName parseCommaSeparatedFullName(String fullName) {
+        if (fullName == null) return new PersonByFullName(null, null);
 
-        return result.orElse("");
+        String[] parts = fullName.split(",", 2);
+        String name = parts[0].trim();
+        String lastname = parts.length > 1 ? parts[1].trim() : null;
+
+        if (name.isEmpty()) name = null;
+        if (lastname != null && lastname.isEmpty()) lastname = null;
+
+        return new PersonByFullName(name, lastname);
+    }
+
+    @Override
+    public PersonByFullName findByUsernameWithFullName(String username) {
+        String names = userRepository.findUserWithFullNameByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Person not found with username: " + username));
+
+        return parseCommaSeparatedFullName(names);
     }
 
     @Override
@@ -99,8 +114,9 @@ public class UserServiceImpl implements UserService {
         final Page<UserModel> entities = userRepository.findAll(pageable);
         List<UserResponseDto> userDtos = userMapper.toDto(entities.getContent());
         userDtos.forEach(u -> {
-            String fullName = this.findByUsernameWithFullName(u.getUsername());
-            u.setFullName(fullName);
+            PersonByFullName person = this.findByUsernameWithFullName(u.getUsername());
+            u.setName(person.name());
+            u.setLastname(person.lastname());
         });
         return new PaginationResponseDto<>(
                 userDtos,

@@ -3,7 +3,7 @@ package team.upao.dev.clients.mapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import team.upao.dev.clients.dto.ClientRequestDto;
+import team.upao.dev.clients.dto.ClientRequestRequestDto;
 import team.upao.dev.clients.dto.ClientResponseDto;
 import team.upao.dev.clients.model.ClientModel;
 
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ClientMapper {
-    public ClientModel toModel(ClientRequestDto clientRequestDto) {
+    public ClientModel toModel(ClientRequestRequestDto clientRequestDto) {
         ClientModel entity = new ClientModel();
         entity.setName(clientRequestDto.getName());
         entity.setLastname(clientRequestDto.getLastname());
@@ -23,7 +23,7 @@ public class ClientMapper {
         return entity;
     }
 
-    public List<ClientModel> toModel(List<ClientRequestDto> clientRequestDtos) {
+    public List<ClientModel> toModel(List<ClientRequestRequestDto> clientRequestDtos) {
         return clientRequestDtos.stream()
                 .map(this::toModel)
                 .toList();

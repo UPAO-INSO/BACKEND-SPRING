@@ -24,9 +24,4 @@ public class ClientModel extends PersonModel {
 
     @Column(nullable = false)
     private String documentNumber;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "client", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<OrderModel> orders = new ArrayList<>();
 }

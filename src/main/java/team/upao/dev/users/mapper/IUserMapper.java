@@ -14,9 +14,10 @@ public interface IUserMapper {
     UserResponseDto toDto(UserModel user);
     List<UserResponseDto> toDto(List<UserModel> users);
 
-    @Mapping(target = "fullName", source = "fullName")
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "lastname", source = "lastname")
     @Mapping(target = "jobTitle", source = "jobTitle")
-    UserResponseDto toDtoWithFullNameAndJobTitle(UserModel user, String fullName, JobEnum jobTitle);
+    UserResponseDto toDtoWithFullNameAndJobTitle(UserModel user, String name, String lastname, JobEnum jobTitle);
 
     UserModel toModel(UserDto dto);
 }

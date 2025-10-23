@@ -22,7 +22,6 @@ public class OrderMapper {
                 .comment(orderDto.getComment())
                 .paid(orderDto.getPaid())
                 .table(null)
-                .client(null)
                 .productOrders(null)
                 .ordersEmployee(null)
                 .build();
@@ -40,7 +39,6 @@ public class OrderMapper {
                 .totalItems(order.getTotalItems())
                 .totalPrice(order.getTotalPrice())
                 .tableId(order.getTable().getId())
-                .clientId(order.getClient().getId())
                 .createdAt(order.getCreatedAt())
                 .updatedAt(order.getUpdatedAt())
                 .paidAt(order.getPaidAt())

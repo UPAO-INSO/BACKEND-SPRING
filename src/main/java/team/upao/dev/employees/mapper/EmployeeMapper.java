@@ -2,7 +2,7 @@ package team.upao.dev.employees.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import team.upao.dev.employees.dto.EmployeeDto;
+import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.model.EmployeeModel;
 
 import java.util.List;
@@ -10,7 +10,7 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class EmployeeMapper {
-    public EmployeeModel toModel(EmployeeDto employeeDto) {
+    public EmployeeModel toModel(EmployeeRequestDto employeeDto) {
         EmployeeModel employeeModel = new EmployeeModel();
 
         employeeModel.setName(employeeDto.getName());
@@ -23,14 +23,14 @@ public class EmployeeMapper {
         return employeeModel;
     }
 
-    public List<EmployeeModel> toModel(List<EmployeeDto> employees) {
+    public List<EmployeeModel> toModel(List<EmployeeRequestDto> employees) {
         return employees.stream()
                 .map(this::toModel)
                 .toList();
     }
 
-    public EmployeeDto toDto(EmployeeModel employeeModel) {
-        return EmployeeDto.builder()
+    public EmployeeRequestDto toDto(EmployeeModel employeeModel) {
+        return EmployeeRequestDto.builder()
                 .id(employeeModel.getId())
                 .name(employeeModel.getName())
                 .lastname(employeeModel.getLastname())
@@ -45,7 +45,7 @@ public class EmployeeMapper {
                 .build();
     }
 
-    public List<EmployeeDto> toDto(List<EmployeeModel> employees) {
+    public List<EmployeeRequestDto> toDto(List<EmployeeModel> employees) {
         return employees.stream()
                 .map(this::toDto)
                 .toList();

@@ -23,7 +23,7 @@ public interface IUserRepository extends JpaRepository<UserModel, Long> {
     @Query("update UserModel u set u.email=:email where u.id=:id")
     void updateEmailById(@Param(value = "id") Long id, @Param(value = "email") String email);
 
-    @Query("SELECT CONCAT(p.name, ' ', p.lastname) as fullName " +
+    @Query("SELECT p.name, p.lastname " +
             "FROM UserModel u " +
             "LEFT JOIN EmployeeModel e ON e.user.id = u.id " +
             "LEFT JOIN PersonModel p ON p.id = e.id " +

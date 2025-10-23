@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import team.upao.dev.clients.dto.ClientRequestDto;
+import team.upao.dev.clients.dto.ClientRequestRequestDto;
 import team.upao.dev.clients.dto.ClientResponseDto;
 import team.upao.dev.clients.mapper.ClientMapper;
 import team.upao.dev.clients.model.ClientModel;
@@ -24,7 +24,7 @@ public class ClientServiceImpl implements ClientService {
     private final ClientMapper clientMapper;
 
     @Override
-    public ClientResponseDto create(ClientRequestDto clientRequestDto) {
+    public ClientResponseDto create(ClientRequestRequestDto clientRequestDto) {
         ClientModel clientModel = clientMapper.toModel(clientRequestDto);
         return clientMapper.toDto(clientRepository.save(clientModel));
     }
@@ -60,7 +60,7 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientResponseDto update(Long id, ClientRequestDto clientRequestDto) {
+    public ClientResponseDto update(Long id, ClientRequestRequestDto clientRequestDto) {
         ClientModel client = this.findModelById(id);
 
         client.setName(clientRequestDto.getName());

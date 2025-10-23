@@ -3,11 +3,11 @@ package team.upao.dev.clients.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import team.upao.dev.persons.dto.PersonDto;
+import team.upao.dev.persons.dto.PersonRequestDto;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ClientRequestDto extends PersonDto {
+public class ClientRequestRequestDto extends PersonRequestDto {
 
     @NotBlank
     private String email;

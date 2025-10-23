@@ -42,7 +42,6 @@ public class OrderServiceImpl implements OrderService {
     private final IOrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final TableService tableService;
-    private final ClientService clientService;
     private final ProductService productService;
     private final EmployeeService employeeService;
 
@@ -74,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Sumar precio de los segundos (incluyen entrada gratis)
         total += segundos.stream()
-                .mapToDouble(p -> p.getPrice() == null ? 0.0 : p.getPrice().doubleValue())
+                .mapToDouble(p -> p.getPrice() == null ? 0.0 : p.getPrice())
                 .sum();
 
         // Calcular entradas que se cobran por separado
@@ -104,11 +103,6 @@ public class OrderServiceImpl implements OrderService {
         if (order.getTableId() != null) {
             TableModel table = tableService.findById(order.getTableId());
             orderModel.setTable(table);
-        }
-
-        if (order.getClientId() != null) {
-            ClientModel client = clientService.findModelById(order.getClientId());
-            orderModel.setClient(client);
         }
 
         List<ProductOrderModel> productOrderModel = order
@@ -160,8 +154,6 @@ public class OrderServiceImpl implements OrderService {
                 .stream()
                 .map(ProductOrderModel::getProduct)
                 .toList();
-
-//        System.out.println(Arrays.toString(products.toArray()));
 
         double totalPrice = this.calculateOrderPrice(products);
 

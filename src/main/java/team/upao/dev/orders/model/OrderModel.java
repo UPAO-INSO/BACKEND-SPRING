@@ -1,5 +1,6 @@
 package team.upao.dev.orders.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,16 +49,14 @@ public class OrderModel {
     @JoinColumn(name = "table_id")
     private TableModel table;
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn(name = "client_id")
-    private ClientModel client;
-
     @Builder.Default
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference("order-productOrders")
     private List<ProductOrderModel> productOrders = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonManagedReference("order-employees")
     private List<OrderEmployeeModel> ordersEmployee = new ArrayList<>();
 
     @Column(nullable = false)

@@ -2,7 +2,6 @@ package team.upao.dev.employees.services.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -10,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.employees.dto.EmployeeDto;
+import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.mapper.EmployeeMapper;
 import team.upao.dev.employees.model.EmployeeModel;
 import team.upao.dev.employees.repository.IEmployeeRepository;
@@ -31,7 +30,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public EmployeeDto create(EmployeeDto employee) {
+    public EmployeeRequestDto create(EmployeeRequestDto employee) {
         EmployeeModel employeeModel = employeeMapper.toModel(employee);
 
         employeeModel.setJob(jobService.findById(employee.getJobId()));
@@ -41,10 +40,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public PaginationResponseDto<EmployeeDto> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<EmployeeRequestDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<EmployeeModel> entities = this.employeeRepository.findAll(pageable);
-        final List<EmployeeDto> employeeDtos = employeeMapper.toDto(entities.getContent());
+        final List<EmployeeRequestDto> employeeDtos = employeeMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
                 employeeDtos,
                 entities.getTotalPages(),
@@ -56,7 +55,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDto findById(Long id) {
+    public EmployeeRequestDto findById(Long id) {
         EmployeeModel employee = employeeRepository
                 .findById(id)
                 .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
@@ -73,7 +72,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     @Transactional
-    public EmployeeDto update(Long id, EmployeeDto employee) {
+    public EmployeeRequestDto update(Long id, EmployeeRequestDto employee) {
         EmployeeModel employeeModel = findModelById(id);
 
         employeeModel.setName(employee.getName());

@@ -7,7 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
-import team.upao.dev.employees.dto.EmployeeDto;
+import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.services.EmployeeService;
 
 @RestController
@@ -17,23 +17,23 @@ public class EmployeeController {
     private final EmployeeService employeeService;
 
     @PostMapping
-    public ResponseEntity<EmployeeDto> create(@RequestBody @Valid EmployeeDto employee) {
+    public ResponseEntity<EmployeeRequestDto> create(@RequestBody @Valid EmployeeRequestDto employee) {
         return ResponseEntity.ok(employeeService.create(employee));
     }
 
     @GetMapping
-    public PaginationResponseDto<EmployeeDto> findAll(@ModelAttribute @Valid PaginationRequestDto paginationRequestDto) {
+    public PaginationResponseDto<EmployeeRequestDto> findAll(@ModelAttribute @Valid PaginationRequestDto paginationRequestDto) {
         return employeeService.findAll(paginationRequestDto);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<EmployeeDto> findById(@PathVariable Long id) {
+    public ResponseEntity<EmployeeRequestDto> findById(@PathVariable Long id) {
         return ResponseEntity.ok(employeeService.findById(id));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EmployeeDto> update(@PathVariable Long id, @RequestBody @Valid EmployeeDto employee) {
+    public ResponseEntity<EmployeeRequestDto> update(@PathVariable Long id, @RequestBody @Valid EmployeeRequestDto employee) {
         return ResponseEntity.ok(employeeService.update(id, employee));
     }
 

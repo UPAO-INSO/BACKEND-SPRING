@@ -16,11 +16,12 @@ import team.upao.dev.auth.model.TokenModel;
 import team.upao.dev.auth.repository.ITokenRepository;
 import team.upao.dev.auth.service.AuthService;
 import team.upao.dev.auth.jwt.JwtService;
-import team.upao.dev.employees.dto.EmployeeDto;
+import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.services.EmployeeService;
 import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.service.impl.JobServiceImpl;
+import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.users.dto.UserDto;
 import team.upao.dev.users.dto.UserResponseDto;
 import team.upao.dev.users.enums.UserRole;
@@ -64,17 +65,21 @@ public class AuthServiceImpl implements AuthService {
             revokeAllUserTokens(userModel);
             saveUserToken(userModel, tokens.accessToken());
 
-            EmployeeDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
-            JobEnum jobTitle = employee != null ? employee.getJobName() : null;
-
-            String fullName = userService.findByUsernameWithFullName(userModel.getUsername());
-            UserResponseDto user = userMapper.toDtoWithFullNameAndJobTitle(userModel, fullName, jobTitle);
+            UserResponseDto user = buildUserResponseDto(userModel);
 
             return new AuthResponseDto(user, tokens);
         } catch (RuntimeException e) {
             log.error("Error during login: {}", e.getMessage());
             throw new IllegalArgumentException("Invalid username or password");
         }
+    }
+
+    private UserResponseDto buildUserResponseDto(UserModel userModel) {
+        EmployeeRequestDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
+        JobEnum jobTitle = employee != null ? employee.getJobName() : null;
+
+        PersonByFullName person = userService.findByUsernameWithFullName(userModel.getUsername());
+        return userMapper.toDtoWithFullNameAndJobTitle(userModel, person.name(), person.lastname(), jobTitle);
     }
 
     @Transactional
@@ -103,7 +108,7 @@ public class AuthServiceImpl implements AuthService {
         JobModel job = jobService.findByTitle(request.getJobTitle());
         Double salary = jobService.getSalaryByJobTitle(job);
 
-        EmployeeDto employeeDto = EmployeeDto.builder()
+        EmployeeRequestDto employeeDto = EmployeeRequestDto.builder()
                 .name(request.getName())
                 .lastname(request.getLastname())
                 .phone(request.getPhone())
@@ -130,11 +135,7 @@ public class AuthServiceImpl implements AuthService {
                         userModel.getAuthorities()
                 );
 
-        EmployeeDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
-        JobEnum jobTitle = employee != null ? employee.getJobName() : null;
-
-        String fullName = userService.findByUsernameWithFullName(userModel.getUsername());
-        UserResponseDto user = userMapper.toDtoWithFullNameAndJobTitle(userModel, fullName, jobTitle);
+        UserResponseDto user = buildUserResponseDto(userModel);
 
         TokensResponseDto tokens = TokensResponseDto.builder()
                 .accessToken(accessToken)

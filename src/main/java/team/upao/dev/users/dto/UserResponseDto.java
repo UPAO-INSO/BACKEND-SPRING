@@ -12,7 +12,9 @@ public class UserResponseDto {
 
     private String username;
 
-    private String fullName;
+    private String name;
+
+    private String lastname;
 
     private String email;
 

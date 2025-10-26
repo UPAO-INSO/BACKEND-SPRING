@@ -10,13 +10,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import team.upao.dev.jobs.enums.JobEnum;
-import team.upao.dev.persons.dto.PersonDto;
+import team.upao.dev.persons.dto.PersonRequestDto;
 
 @EqualsAndHashCode(callSuper = false)
 @Data
 @SuperBuilder
 @AllArgsConstructor @NoArgsConstructor
-public class EmployeeDto extends PersonDto {
+public class EmployeeRequestDto extends PersonRequestDto {
 
     @NotNull(message = "Salary is required")
     @Positive

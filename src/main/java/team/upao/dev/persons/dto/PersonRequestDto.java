@@ -1,7 +1,6 @@
 package team.upao.dev.persons.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +12,7 @@ import java.time.Instant;
 @Data
 @SuperBuilder
 @AllArgsConstructor @NoArgsConstructor
-public class PersonDto {
+public class PersonRequestDto {
     private Long id;
 
     @NotBlank(message = "Name is required")

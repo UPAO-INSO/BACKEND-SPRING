@@ -14,8 +14,8 @@ import java.time.Instant;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Builder
-@Entity
-@Table(name = "voucher")
+//@Entity
+//@Table(name = "voucher")
 public class VoucherModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -2,6 +2,7 @@ package team.upao.dev.users.service;
 
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
+import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.persons.model.PersonModel;
 import team.upao.dev.users.dto.UserDto;
 import team.upao.dev.users.dto.UserResponseDto;
@@ -24,5 +25,5 @@ public interface UserService {
     UserResponseDto updateEmailById(Long id, String email);
     String delete(Long id);
 
-    String findByUsernameWithFullName(String username);
+    PersonByFullName findByUsernameWithFullName(String username);
 }

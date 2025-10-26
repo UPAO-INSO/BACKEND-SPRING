@@ -30,6 +30,20 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
+    public List<ProductResponseDto> findByIds(List<Long> ids) {
+        List<ProductModel> products = productRepository.findAllById(ids);
+
+        if (products.isEmpty()) {
+            throw new NotFoundException("No products found with the provided IDs.");
+        }
+
+        return productMapper.toDto(products)
+                .stream()
+                .filter(p -> p.getActive() == true)
+                .toList();
+    }
+
+    @Override
     public PaginationResponseDto<ProductResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<ProductModel> entities = productRepository.findAll(pageable);

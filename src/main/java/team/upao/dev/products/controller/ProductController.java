@@ -24,6 +24,11 @@ public class ProductController extends BaseController<ProductRequestDto, Product
         return productService;
     }
 
+    @PostMapping("/find-by-ids")
+    public ResponseEntity<List<ProductResponseDto>> findByIds(@RequestBody List<Long> ids) {
+        return ResponseEntity.ok(productService.findByIds(ids));
+    }
+
     @GetMapping("/name/{name}")
     public ResponseEntity<ProductResponseDto> findByName(@PathVariable String name) {
         return ResponseEntity.ok(productService.findByName(name));

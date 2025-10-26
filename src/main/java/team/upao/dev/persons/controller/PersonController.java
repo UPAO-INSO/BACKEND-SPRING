@@ -23,7 +23,6 @@ public class PersonController extends BaseController<PersonRequestDto, PersonRes
 
     @PostMapping("/by-full-name")
     public PersonResponseDto findByFullName(@RequestBody @Valid PersonByFullName person) {
-        System.out.println(person);
         return personService.findByFullName(person.name(), person.lastname());
     }
 }

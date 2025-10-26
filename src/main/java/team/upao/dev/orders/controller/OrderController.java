@@ -8,7 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
-import team.upao.dev.orders.dto.OrderDto;
+import team.upao.dev.orders.dto.OrderRequestDto;
+import team.upao.dev.orders.dto.OrderResponseDto;
 import team.upao.dev.orders.dto.OrderFilterDto;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.orders.service.OrderService;
@@ -23,20 +24,19 @@ public class OrderController {
     private final OrderService orderService;
 
     @PostMapping("/create")
-    public ResponseEntity<OrderDto> create(@RequestBody @Valid OrderDto order) {
-        System.out.println(order);
+    public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.create(order));
     }
 
     @GetMapping
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                                   @RequestParam(value = "status", required = false) OrderStatus status) {
+    public ResponseEntity<PaginationResponseDto<OrderResponseDto>> findAll(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                           @RequestParam(value = "status", required = false) OrderStatus status) {
         return ResponseEntity.ok(orderService.findAll(requestDto, status));
     }
 
     @PostMapping("/filter-array-status")
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findAllByArrayStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                                                @RequestBody String[] status) {
+    public ResponseEntity<PaginationResponseDto<OrderResponseDto>> findAllByArrayStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                                        @RequestBody String[] status) {
         List<OrderStatus> statusList = Arrays.stream(status)
                 .map(OrderStatus::valueOf)
                 .toList();
@@ -44,37 +44,36 @@ public class OrderController {
     }
 
     @PostMapping("/filter-by-tables-and-status")
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findAllByTablesAndStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                                                    @RequestBody @Valid OrderFilterDto orderFilterDto) {
+    public ResponseEntity<PaginationResponseDto<OrderResponseDto>> findAllByTablesAndStatus(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                                            @RequestBody @Valid OrderFilterDto orderFilterDto) {
         return ResponseEntity.ok(orderService
                 .findAllByTablesAndStatus(requestDto, orderFilterDto.getTableIds(), orderFilterDto.getOrderStatus()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDto> findById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponseDto> findById(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.findById(id));
     }
 
     @GetMapping("/by-tableId/{tableId}")
-    public ResponseEntity<PaginationResponseDto<OrderDto>> findByTableId(@ModelAttribute @Valid PaginationRequestDto requestDto,
-                                                        @PathVariable Long tableId) {
+    public ResponseEntity<PaginationResponseDto<OrderResponseDto>> findByTableId(@ModelAttribute @Valid PaginationRequestDto requestDto,
+                                                                                 @PathVariable Long tableId) {
         return ResponseEntity.ok(orderService.findAllByTableId(requestDto, tableId));
     }
 
     @PostMapping("/tables")
-    public ResponseEntity<List<OrderDto>> findByTableIds(@RequestBody Long[] tableIds) {
+    public ResponseEntity<List<OrderResponseDto>> findByTableIds(@RequestBody Long[] tableIds) {
         List<Long> ids = List.of(tableIds);
         return ResponseEntity.ok(orderService.findByTableIds(ids));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderDto> update(@PathVariable Long id, @RequestBody @Valid OrderDto order) {
+    public ResponseEntity<OrderResponseDto> update(@PathVariable Long id, @RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.update(id, order));
     }
 
     @PatchMapping("/status")
-    public ResponseEntity<OrderDto> changeStatus(@RequestBody @Valid ChangeOrderStatusDto order) {
+    public ResponseEntity<OrderResponseDto> changeStatus(@RequestBody @Valid ChangeOrderStatusDto order) {
         return ResponseEntity.ok(orderService.changeStatus(order));
     }
 

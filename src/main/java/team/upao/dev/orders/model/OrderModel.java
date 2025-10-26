@@ -50,7 +50,7 @@ public class OrderModel {
     private TableModel table;
 
     @Builder.Default
-    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("order-productOrders")
     private List<ProductOrderModel> productOrders = new ArrayList<>();
 

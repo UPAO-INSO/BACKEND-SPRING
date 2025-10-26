@@ -2,7 +2,8 @@ package team.upao.dev.orders.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import team.upao.dev.orders.dto.OrderDto;
+import team.upao.dev.orders.dto.OrderRequestDto;
+import team.upao.dev.orders.dto.OrderResponseDto;
 import team.upao.dev.orders.dto.OrderEmployeeDto;
 import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.products.dto.ProductOrderResponseDto;
@@ -16,22 +17,21 @@ public class OrderMapper {
     private final ProductOrderMapper productOrderMapper;
     private final OrderEmployeeMapper orderEmployeeMapper;
 
-    public OrderModel toModel(OrderDto orderDto) {
+    public OrderModel toModel(OrderRequestDto orderResponseDto) {
         return OrderModel.builder()
-                .id(orderDto.getId())
-                .comment(orderDto.getComment())
-                .paid(orderDto.getPaid())
+                .comment(orderResponseDto.getComment())
+                .paid(orderResponseDto.getPaid())
                 .table(null)
                 .productOrders(null)
                 .ordersEmployee(null)
                 .build();
     }
 
-    public OrderDto toDto(OrderModel order) {
+    public OrderResponseDto toDto(OrderModel order) {
         List<ProductOrderResponseDto> productOrders = productOrderMapper.toDto(order.getProductOrders());
         List<OrderEmployeeDto> orderEmployees = orderEmployeeMapper.toDto(order.getOrdersEmployee());
 
-        return OrderDto.builder()
+        return OrderResponseDto.builder()
                 .id(order.getId())
                 .orderStatus(order.getOrderStatus())
                 .comment(order.getComment())
@@ -47,7 +47,7 @@ public class OrderMapper {
                 .build();
     }
 
-    public List<OrderDto> toDto(List<OrderModel> orders) {
+    public List<OrderResponseDto> toDto(List<OrderModel> orders) {
         return orders.stream()
                 .map(this::toDto)
                 .toList();

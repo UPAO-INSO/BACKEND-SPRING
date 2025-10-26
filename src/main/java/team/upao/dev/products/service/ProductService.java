@@ -11,6 +11,7 @@ import java.util.List;
 
 public interface ProductService extends BaseService<ProductRequestDto, ProductResponseDto, Long> {
     PaginationResponseDto<ProductResponseDto> findAllByProductTypeId(Long productTypeId, PaginationRequestDto requestDto);
+    List<ProductResponseDto> findByIds(List<Long> ids);
     ProductResponseDto findByName(String name);
     List<ProductResponseDto> findByNameContaining(String name);
     ProductModel findModelById(Long id);

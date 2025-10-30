@@ -1,12 +1,10 @@
 package team.upao.dev.common.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Collection;
 
-@Data
+@Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
 public class PaginationResponseDto<T> {
     private Collection<T> content;

@@ -4,16 +4,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.common.decorators.ValidPassword;
 
-@Data
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class SignupDto {
     @NotBlank(message = "Name is required")
     private String name;

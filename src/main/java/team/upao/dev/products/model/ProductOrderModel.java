@@ -2,16 +2,17 @@ package team.upao.dev.products.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.orders.model.OrderModel;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "product_order")
+@Table(
+        name = "product_order",
+        indexes = @Index(name = "idx_product_order_product_id", columnList = "product_id")
+)
 public class ProductOrderModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

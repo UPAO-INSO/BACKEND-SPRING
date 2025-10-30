@@ -1,10 +1,7 @@
 package team.upao.dev.vouchers.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.vouchers.enums.CurrencyType;
 import team.upao.dev.vouchers.enums.VoucherStatus;
@@ -12,7 +9,8 @@ import team.upao.dev.vouchers.enums.VoucherType;
 
 import java.time.Instant;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 //@Entity
 //@Table(name = "voucher")

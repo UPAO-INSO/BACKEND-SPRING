@@ -1,9 +1,7 @@
 package team.upao.dev.exceptions;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -98,7 +96,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 
-    @Data
+    @Getter @Setter
     @AllArgsConstructor @NoArgsConstructor
     public static class ApiError {
         private LocalDateTime timestamp = LocalDateTime.now();

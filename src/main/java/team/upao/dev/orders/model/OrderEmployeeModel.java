@@ -2,16 +2,20 @@ package team.upao.dev.orders.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.employees.model.EmployeeModel;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "order_employee")
+@Table(
+        name = "order_employee",
+        indexes = {
+                @Index(name = "idx_order_employee_order_id", columnList = "order_id"),
+                @Index(name = "idx_order_employee_employee_id", columnList = "employee_id")
+        }
+)
 public class OrderEmployeeModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

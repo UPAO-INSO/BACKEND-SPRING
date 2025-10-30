@@ -1,16 +1,21 @@
 package team.upao.dev.tables.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.tables.enums.TableStatus;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "tables")
+@Table(
+        name = "tables",
+        indexes = {
+                @Index(name = "idx_tables_number", columnList = "number"),
+                @Index(name = "idx_tables_floor", columnList = "floor"),
+                @Index(name = "idx_tables_status", columnList = "status")
+        }
+)
 public class TableModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +30,7 @@ public class TableModel {
     @Column(nullable = false)
     private Integer floor;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
     private Boolean isActive = true;
 

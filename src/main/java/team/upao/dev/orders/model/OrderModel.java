@@ -2,14 +2,10 @@ package team.upao.dev.orders.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import team.upao.dev.clients.model.ClientModel;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.tables.model.TableModel;
@@ -19,24 +15,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 @EntityListeners(AuditingEntityListener.class)
-@Data @NoArgsConstructor @AllArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "orders")
+@Table(
+        name = "orders",
+        indexes = {
+                @Index(name = "idx_orders_order_status", columnList = "orderStatus"),
+                @Index(name = "idx_orders_table_id", columnList = "table_id")
+        }
+)
 public class OrderModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private  Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, columnDefinition = "varchar(20) default 'PENDING'")
+    @Column(nullable = false)
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @Column(nullable = false)
     private String comment;
 
     @Builder.Default
-    @Column(nullable = false, columnDefinition = "boolean default false")
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private Boolean paid = false;
 
     @Column(nullable = false)

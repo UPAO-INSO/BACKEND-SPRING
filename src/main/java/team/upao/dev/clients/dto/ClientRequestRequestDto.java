@@ -1,12 +1,11 @@
 package team.upao.dev.clients.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import team.upao.dev.persons.dto.PersonRequestDto;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
+@Getter @Setter
 public class ClientRequestRequestDto extends PersonRequestDto {
 
     @NotBlank

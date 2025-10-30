@@ -143,7 +143,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderModel.setOrderStatus(OrderStatus.PENDING);
         orderModel.setTotalItems(totalItems);
-        orderModel.setPaid(order.getPaid() != null ? order.getPaid() : false);
 
         productOrderModel.forEach(productOrder -> productOrder.setOrder(orderModel));
 
@@ -156,6 +155,7 @@ public class OrderServiceImpl implements OrderService {
         double totalPrice = this.calculateOrderPrice(orderModel.getProductOrders());
 
         orderModel.setTotalPrice(totalPrice);
+        orderModel.setPaid(false);
 
         OrderModel saved = orderRepository.save(orderModel);
 

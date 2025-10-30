@@ -2,14 +2,12 @@ package team.upao.dev.persons.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Instant;
 
-@Data
+@Getter @Setter
 @SuperBuilder
 @AllArgsConstructor @NoArgsConstructor
 public class PersonRequestDto {

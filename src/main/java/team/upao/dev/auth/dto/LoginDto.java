@@ -1,9 +1,10 @@
 package team.upao.dev.auth.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import team.upao.dev.common.decorators.ValidPassword;
 
-@Data
+@Getter @Setter
 public class LoginDto {
     private String username;
     @ValidPassword

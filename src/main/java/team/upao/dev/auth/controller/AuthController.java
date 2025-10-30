@@ -13,8 +13,10 @@ import org.springframework.web.bind.annotation.*;
 import team.upao.dev.auth.dto.*;
 import team.upao.dev.auth.service.AuthService;
 import team.upao.dev.users.dto.UserDto;
-import team.upao.dev.users.dto.UserResponseDto;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j

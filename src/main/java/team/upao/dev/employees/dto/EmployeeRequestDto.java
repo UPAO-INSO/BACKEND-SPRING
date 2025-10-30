@@ -4,16 +4,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.persons.dto.PersonRequestDto;
 
-@EqualsAndHashCode(callSuper = false)
-@Data
+@Getter @Setter
 @SuperBuilder
 @AllArgsConstructor @NoArgsConstructor
 public class EmployeeRequestDto extends PersonRequestDto {

@@ -2,14 +2,14 @@ package team.upao.dev.orders.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
 
-import java.time.Instant;
 import java.util.List;
 
-@Data
+@Getter @Setter
 @Builder
 public class OrderRequestDto {
     private OrderStatus orderStatus;
@@ -17,20 +17,9 @@ public class OrderRequestDto {
     private String comment;
 
     @NotNull
-    private Boolean paid;
-
-    @NotNull
     private Long tableId;
 
-    @NotNull
-    private Integer totalItems;
-
-    @NotNull
-    private Double totalPrice;
-
-    private Instant createdAt;
-
-    private Instant paidAt;
+    private Boolean paid;
 
     @NotNull
     private List<ProductOrderRequestDto> productOrders;

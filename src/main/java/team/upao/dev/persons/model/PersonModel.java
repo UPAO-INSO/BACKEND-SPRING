@@ -8,12 +8,19 @@ import org.springframework.data.annotation.LastModifiedDate;
 
 import java.time.Instant;
 
-@Data
+@Getter @Setter
 @SuperBuilder
 @NoArgsConstructor @AllArgsConstructor
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
-@Table(name = "persons")
+@Table(
+        name = "persons",
+        indexes = {
+                @Index(name = "idx_persons_phone", columnList = "phone"),
+                @Index(name = "idx_persons_name", columnList = "name"),
+                @Index(name = "idx_persons_lastname", columnList = "lastname")
+        }
+)
 public class PersonModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +35,7 @@ public class PersonModel {
     @Column(nullable = false, unique = true)
     private String phone;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
     private Boolean active = true;
 

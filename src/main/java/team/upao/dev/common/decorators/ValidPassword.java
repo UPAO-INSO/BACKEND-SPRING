@@ -6,7 +6,6 @@ import team.upao.dev.common.validation.PasswordConstraintValidator;
 
 import java.lang.annotation.*;
 
-
 @Documented
 @Constraint(validatedBy = PasswordConstraintValidator.class)
 @Target({ElementType.TYPE, ElementType.FIELD, ElementType.ANNOTATION_TYPE})

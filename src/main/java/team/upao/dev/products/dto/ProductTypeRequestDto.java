@@ -1,9 +1,10 @@
 package team.upao.dev.products.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter @Setter
 public class ProductTypeRequestDto {
     @NotBlank
     private String name;

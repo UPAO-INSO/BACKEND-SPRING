@@ -12,14 +12,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @EntityListeners(AuditingEntityListener.class)
-@EqualsAndHashCode(callSuper = true)
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @SuperBuilder
 @Entity
 @PrimaryKeyJoinColumn(name = "id")
-@Table(name = "clients")
+@Table(
+        name = "clients",
+        indexes = {
+                @Index(name = "idx_clients_document_number", columnList = "document_number", unique = true),
+                @Index(name = "idx_clients_email", columnList = "email", unique = true)
+        }
+)
 public class ClientModel extends PersonModel {
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String email;
 
     @Column(nullable = false)

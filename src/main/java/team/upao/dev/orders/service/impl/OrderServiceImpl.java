@@ -15,6 +15,7 @@ import team.upao.dev.exceptions.NotFoundException;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
 import team.upao.dev.orders.dto.OrderRequestDto;
 import team.upao.dev.orders.dto.OrderResponseDto;
+import team.upao.dev.orders.dto.ServeProductOrderRequestDto;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.orders.mapper.OrderMapper;
 import team.upao.dev.orders.model.OrderEmployeeModel;
@@ -22,9 +23,12 @@ import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.orders.repository.IOrderRepository;
 import team.upao.dev.orders.service.OrderService;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
+import team.upao.dev.products.enums.ProductOrderItemStatus;
+import team.upao.dev.products.enums.ProductOrderStatus;
 import team.upao.dev.products.enums.ProductTypeEnum;
 import team.upao.dev.products.mapper.ProductOrderMapper;
 import team.upao.dev.products.model.ProductModel;
+import team.upao.dev.products.model.ProductOrderItemModel;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.tables.enums.TableStatus;
@@ -159,6 +163,87 @@ public class OrderServiceImpl implements OrderService {
 
         OrderModel saved = orderRepository.save(orderModel);
 
+        return orderMapper.toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDto serveProductOrder(ServeProductOrderRequestDto serveProductOrderRequestDto) {
+        long orderId = serveProductOrderRequestDto.getOrderId();
+        long productOrderId = serveProductOrderRequestDto.getProductOrderId();
+        int quantityToServe = serveProductOrderRequestDto.getQuantity();
+
+        if (quantityToServe <= 0) throw new IllegalArgumentException("Quantity to serve must be > 0");
+
+        OrderModel order = this.findModelById(orderId);
+
+        ProductOrderModel po = order.getProductOrders()
+                .stream()
+                .filter(p -> p.getId() != null && p.getId().equals(productOrderId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("ProductOrder not found"));
+
+        if (po.getItems() == null || po.getItems().isEmpty()) {
+            ProductOrderItemModel base = ProductOrderItemModel.builder()
+                    .quantity(po.getQuantity() == null ? 0 : po.getQuantity())
+                    .preparedQuantity(0)
+                    .servedQuantity(0)
+                    .status(ProductOrderItemStatus.PENDING)
+                    .productOrder(po)
+                    .build();
+            po.setItems(new ArrayList<>(List.of(base)));
+        }
+
+        int remainingToServe = quantityToServe;
+
+        for (ProductOrderItemModel item : po.getItems()) {
+            if (remainingToServe <= 0) break;
+
+            int itemRemaining = (item.getQuantity() == null ? 0 : item.getQuantity()) - (item.getServedQuantity() == null ? 0 : item.getServedQuantity());
+            if (itemRemaining <= 0) continue;
+
+            int serve = Math.min(itemRemaining, remainingToServe);
+            item.setServedQuantity((item.getServedQuantity() == null ? 0 : item.getServedQuantity()) + serve);
+            remainingToServe -= serve;
+
+            if (item.getServedQuantity() >= item.getQuantity()) {
+                item.setStatus(ProductOrderItemStatus.SERVED);
+            } else {
+                item.setStatus(ProductOrderItemStatus.PREPARING);
+            }
+        }
+
+        if (remainingToServe > 0) {
+            throw new IllegalArgumentException("Not enough remaining quantity to serve. Remaining: " + remainingToServe);
+        }
+
+        int totalServed = po.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
+        int totalQty = po.getQuantity() == null ? 0 : po.getQuantity();
+
+        if (totalServed >= totalQty && totalQty > 0) {
+            po.setStatus(ProductOrderStatus.SERVED);
+        } else if (totalServed > 0) {
+            po.setStatus(ProductOrderStatus.PREPARING);
+        } else {
+            po.setStatus(ProductOrderStatus.PENDING);
+        }
+
+        boolean allServed = order.getProductOrders()
+                .stream()
+                .allMatch(p -> {
+                    int served = p.getItems() == null ? 0 : p.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
+                    int qty = p.getQuantity() == null ? 0 : p.getQuantity();
+                    return qty > 0 && served >= qty;
+                });
+
+//        if (allServed) {
+//            order.setOrderStatus(OrderStatus.COMPLETED);
+//            if (order.getTable() != null) {
+//                tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
+//            }
+//        }
+
+        OrderModel saved = orderRepository.save(order);
         return orderMapper.toDto(saved);
     }
 

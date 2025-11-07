@@ -12,12 +12,12 @@ RUN mvn clean package -DskipTests
 RUN ls -la /app/target
 
 # Etapa 2: Ejecución de la aplicación
-FROM openjdk:17-jdk-slim
+FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar /app/punto_de_sal.jar
 
-EXPOSE 8080
+EXPOSE 3000
 
 ENTRYPOINT ["java", "-XX:-UseContainerSupport", "-jar", "/app/punto_de_sal.jar"]

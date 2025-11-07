@@ -2,10 +2,12 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     depends_on:
-      - db
+      - "${DB_HOST}"
     environment:
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
@@ -16,8 +18,9 @@ services:
   db:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:${DB_PORT}"
     environment:
+      - DB_PORT=${DB_PORT}
       - MYSQL_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
     volumes:

@@ -7,10 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
-import team.upao.dev.orders.dto.ChangeOrderStatusDto;
-import team.upao.dev.orders.dto.OrderRequestDto;
-import team.upao.dev.orders.dto.OrderResponseDto;
-import team.upao.dev.orders.dto.OrderFilterDto;
+import team.upao.dev.orders.dto.*;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.orders.service.OrderService;
 
@@ -26,6 +23,11 @@ public class OrderController {
     @PostMapping("/create")
     public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.create(order));
+    }
+
+    @PatchMapping("/product-orders/serve")
+    public ResponseEntity<OrderResponseDto> serveProductOrder(@Valid @RequestBody ServeProductOrderRequestDto request) {
+        return ResponseEntity.ok(orderService.serveProductOrder(request));
     }
 
     @GetMapping

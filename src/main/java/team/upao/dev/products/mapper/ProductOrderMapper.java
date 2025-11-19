@@ -2,6 +2,7 @@ package team.upao.dev.products.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
 import team.upao.dev.products.dto.ProductOrderResponseDto;
 import team.upao.dev.products.model.ProductOrderModel;
@@ -31,11 +32,14 @@ public class ProductOrderMapper {
         return ProductOrderResponseDto.builder()
                 .id(productOrderModel.getId())
                 .quantity(productOrderModel.getQuantity())
+                .servedQuantity(productOrderModel.getServedQuantity() != null ? productOrderModel.getServedQuantity() : 0)
                 .unitPrice(productOrderModel.getUnitPrice())
                 .subtotal(productOrderModel.getSubtotal())
+                .status(productOrderModel.getStatus() != null ? productOrderModel.getStatus().name() : OrderStatus.PENDING.name())
                 .orderId(productOrderModel.getOrder().getId())
                 .productId(productOrderModel.getProduct().getId())
                 .productName(productOrderModel.getProduct().getName())
+                .productTypeName(productOrderModel.getProduct().getProductType().getName())
                 .build();
     }
 

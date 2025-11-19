@@ -23,12 +23,10 @@ import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.orders.repository.IOrderRepository;
 import team.upao.dev.orders.service.OrderService;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
-import team.upao.dev.products.enums.ProductOrderItemStatus;
 import team.upao.dev.products.enums.ProductOrderStatus;
 import team.upao.dev.products.enums.ProductTypeEnum;
 import team.upao.dev.products.mapper.ProductOrderMapper;
 import team.upao.dev.products.model.ProductModel;
-import team.upao.dev.products.model.ProductOrderItemModel;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.tables.enums.TableStatus;
@@ -173,57 +171,43 @@ public class OrderServiceImpl implements OrderService {
         long productOrderId = serveProductOrderRequestDto.getProductOrderId();
         int quantityToServe = serveProductOrderRequestDto.getQuantity();
 
-        if (quantityToServe <= 0) throw new IllegalArgumentException("Quantity to serve must be > 0");
+        if (quantityToServe <= 0) {
+            throw new IllegalArgumentException("Quantity to serve must be greater than 0");
+        }
 
         OrderModel order = this.findModelById(orderId);
 
+        if (order.getOrderStatus() == OrderStatus.COMPLETED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot serve items for a " + order.getOrderStatus() + " order");
+        }
+
+        // Buscar el ProductOrder específico
         ProductOrderModel po = order.getProductOrders()
                 .stream()
                 .filter(p -> p.getId() != null && p.getId().equals(productOrderId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("ProductOrder not found"));
+                .orElseThrow(() -> new IllegalArgumentException("ProductOrder with id " + productOrderId + " not found in order " + orderId));
 
-        if (po.getItems() == null || po.getItems().isEmpty()) {
-            ProductOrderItemModel base = ProductOrderItemModel.builder()
-                    .quantity(po.getQuantity() == null ? 0 : po.getQuantity())
-                    .preparedQuantity(0)
-                    .servedQuantity(0)
-                    .status(ProductOrderItemStatus.PENDING)
-                    .productOrder(po)
-                    .build();
-            po.setItems(new ArrayList<>(List.of(base)));
+        int currentServed = po.getServedQuantity() == null ? 0 : po.getServedQuantity();
+        int totalQuantity = po.getQuantity() == null ? 0 : po.getQuantity();
+        int remaining = totalQuantity - currentServed;
+
+        if (quantityToServe > remaining) {
+            throw new IllegalArgumentException(
+                    String.format("Cannot serve %d items. Only %d remaining out of %d total (Already served: %d)",
+                            quantityToServe, remaining, totalQuantity, currentServed)
+            );
         }
 
-        int remainingToServe = quantityToServe;
+        int newServedQuantity = currentServed + quantityToServe;
+        po.setServedQuantity(newServedQuantity);
 
-        for (ProductOrderItemModel item : po.getItems()) {
-            if (remainingToServe <= 0) break;
-
-            int itemRemaining = (item.getQuantity() == null ? 0 : item.getQuantity()) - (item.getServedQuantity() == null ? 0 : item.getServedQuantity());
-            if (itemRemaining <= 0) continue;
-
-            int serve = Math.min(itemRemaining, remainingToServe);
-            item.setServedQuantity((item.getServedQuantity() == null ? 0 : item.getServedQuantity()) + serve);
-            remainingToServe -= serve;
-
-            if (item.getServedQuantity() >= item.getQuantity()) {
-                item.setStatus(ProductOrderItemStatus.SERVED);
-            } else {
-                item.setStatus(ProductOrderItemStatus.PREPARING);
-            }
-        }
-
-        if (remainingToServe > 0) {
-            throw new IllegalArgumentException("Not enough remaining quantity to serve. Remaining: " + remainingToServe);
-        }
-
-        int totalServed = po.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
-        int totalQty = po.getQuantity() == null ? 0 : po.getQuantity();
-
-        if (totalServed >= totalQty && totalQty > 0) {
+        if (newServedQuantity >= totalQuantity && totalQuantity > 0) {
             po.setStatus(ProductOrderStatus.SERVED);
-        } else if (totalServed > 0) {
+            log.info("ProductOrder {} fully served ({}/{})", productOrderId, newServedQuantity, totalQuantity);
+        } else if (newServedQuantity > 0) {
             po.setStatus(ProductOrderStatus.PREPARING);
+            log.info("ProductOrder {} partially served ({}/{})", productOrderId, newServedQuantity, totalQuantity);
         } else {
             po.setStatus(ProductOrderStatus.PENDING);
         }
@@ -231,17 +215,30 @@ public class OrderServiceImpl implements OrderService {
         boolean allServed = order.getProductOrders()
                 .stream()
                 .allMatch(p -> {
-                    int served = p.getItems() == null ? 0 : p.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
+                    int served = p.getServedQuantity() == null ? 0 : p.getServedQuantity();
                     int qty = p.getQuantity() == null ? 0 : p.getQuantity();
                     return qty > 0 && served >= qty;
                 });
 
-//        if (allServed) {
-//            order.setOrderStatus(OrderStatus.COMPLETED);
-//            if (order.getTable() != null) {
-//                tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
-//            }
-//        }
+
+        if (allServed) {
+            if (order.getOrderStatus() == OrderStatus.PENDING || order.getOrderStatus() == OrderStatus.PREPARING) {
+                order.setOrderStatus(OrderStatus.READY);
+                log.info("Order {} marked as READY - all products served", orderId);
+            }
+        } else {
+            boolean anyPreparing = order.getProductOrders()
+                    .stream()
+                    .anyMatch(p -> {
+                        int served = p.getServedQuantity() == null ? 0 : p.getServedQuantity();
+                        return served > 0;
+                    });
+
+            if (anyPreparing && order.getOrderStatus() == OrderStatus.PENDING) {
+                order.setOrderStatus(OrderStatus.PREPARING);
+                log.info("Order {} marked as PREPARING", orderId);
+            }
+        }
 
         OrderModel saved = orderRepository.save(order);
         return orderMapper.toDto(saved);
@@ -376,7 +373,7 @@ public class OrderServiceImpl implements OrderService {
             return list;
         });
 
-        java.util.Set<Long> incomingIds = incoming.stream()
+        Set<Long> incomingIds = incoming.stream()
                 .map(p -> p.getProduct() == null ? null : p.getProduct().getId())
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -450,8 +447,8 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public String delete(Long id) {
-        OrderModel order = this.findModelById(id);
-//        orderRepository.deleteById(id);
+        this.findModelById(id);
+        orderRepository.deleteById(id);
 
         return "Deleted order with id: " + id;
     }

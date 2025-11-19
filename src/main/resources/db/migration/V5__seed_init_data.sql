@@ -20,6 +20,18 @@ VALUES (1, 'ENTRADAS'),
        (4, 'SEGUNDOS'),
        (5, 'CARTA');
 
+INSERT INTO `tables` (id, capacity, floor, number, status)
+VALUES (1, 4, 1, 1, 'AVAILABLE'),
+       (2, 4, 1, 2, 'AVAILABLE'),
+       (3, 4, 1, 3, 'AVAILABLE'),
+       (4, 4, 1, 4, 'AVAILABLE'),
+       (5, 4, 1, 5, 'AVAILABLE'),
+       (6, 4, 1, 6, 'AVAILABLE'),
+       (7, 4, 1, 7, 'AVAILABLE'),
+       (8, 4, 1, 8, 'AVAILABLE'),
+       (9, 4, 1, 9, 'AVAILABLE'),
+       (10, 4, 1, 10, 'AVAILABLE');
+
 INSERT INTO `product` (id, active, available, description, name, price, product_type_id)
 VALUES (1,
         1,

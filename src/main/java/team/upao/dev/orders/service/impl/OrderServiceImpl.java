@@ -23,7 +23,6 @@ import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.orders.repository.IOrderRepository;
 import team.upao.dev.orders.service.OrderService;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
-import team.upao.dev.products.enums.ProductOrderStatus;
 import team.upao.dev.products.enums.ProductTypeEnum;
 import team.upao.dev.products.mapper.ProductOrderMapper;
 import team.upao.dev.products.model.ProductModel;
@@ -164,84 +163,69 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(saved);
     }
 
+    @Transactional
+    public OrderResponseDto allServeProductOrders(Long orderId) {
+        OrderModel order = this.findModelById(orderId);
+
+        for (ProductOrderModel po : order.getProductOrders()) {
+            po.setServedQuantity(po.getQuantity());
+        }
+
+        OrderModel saved = orderRepository.save(order);
+        return orderMapper.toDto(saved);
+    }
+
     @Override
     @Transactional
     public OrderResponseDto serveProductOrder(ServeProductOrderRequestDto serveProductOrderRequestDto) {
         long orderId = serveProductOrderRequestDto.getOrderId();
         long productOrderId = serveProductOrderRequestDto.getProductOrderId();
-        int quantityToServe = serveProductOrderRequestDto.getQuantity();
+        int quantityServe = serveProductOrderRequestDto.getQuantity();
 
-        if (quantityToServe <= 0) {
-            throw new IllegalArgumentException("Quantity to serve must be greater than 0");
+        if (quantityServe == 0) {
+            throw new IllegalArgumentException("Quantity cannot be 0");
         }
 
         OrderModel order = this.findModelById(orderId);
 
         if (order.getOrderStatus() == OrderStatus.COMPLETED || order.getOrderStatus() == OrderStatus.CANCELLED) {
-            throw new IllegalArgumentException("Cannot serve items for a " + order.getOrderStatus() + " order");
+            throw new IllegalArgumentException("Cannot modify items for a " + order.getOrderStatus() + " order");
         }
 
-        // Buscar el ProductOrder específico
         ProductOrderModel po = order.getProductOrders()
                 .stream()
                 .filter(p -> p.getId() != null && p.getId().equals(productOrderId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("ProductOrder with id " + productOrderId + " not found in order " + orderId));
 
-        int currentServed = po.getServedQuantity() == null ? 0 : po.getServedQuantity();
-        int totalQuantity = po.getQuantity() == null ? 0 : po.getQuantity();
-        int remaining = totalQuantity - currentServed;
+        int newServedQuantity = getNewServedQuantity(po, quantityServe);
 
-        if (quantityToServe > remaining) {
-            throw new IllegalArgumentException(
-                    String.format("Cannot serve %d items. Only %d remaining out of %d total (Already served: %d)",
-                            quantityToServe, remaining, totalQuantity, currentServed)
-            );
-        }
-
-        int newServedQuantity = currentServed + quantityToServe;
         po.setServedQuantity(newServedQuantity);
-
-        if (newServedQuantity >= totalQuantity && totalQuantity > 0) {
-            po.setStatus(ProductOrderStatus.SERVED);
-            log.info("ProductOrder {} fully served ({}/{})", productOrderId, newServedQuantity, totalQuantity);
-        } else if (newServedQuantity > 0) {
-            po.setStatus(ProductOrderStatus.PREPARING);
-            log.info("ProductOrder {} partially served ({}/{})", productOrderId, newServedQuantity, totalQuantity);
-        } else {
-            po.setStatus(ProductOrderStatus.PENDING);
-        }
-
-        boolean allServed = order.getProductOrders()
-                .stream()
-                .allMatch(p -> {
-                    int served = p.getServedQuantity() == null ? 0 : p.getServedQuantity();
-                    int qty = p.getQuantity() == null ? 0 : p.getQuantity();
-                    return qty > 0 && served >= qty;
-                });
-
-
-        if (allServed) {
-            if (order.getOrderStatus() == OrderStatus.PENDING || order.getOrderStatus() == OrderStatus.PREPARING) {
-                order.setOrderStatus(OrderStatus.READY);
-                log.info("Order {} marked as READY - all products served", orderId);
-            }
-        } else {
-            boolean anyPreparing = order.getProductOrders()
-                    .stream()
-                    .anyMatch(p -> {
-                        int served = p.getServedQuantity() == null ? 0 : p.getServedQuantity();
-                        return served > 0;
-                    });
-
-            if (anyPreparing && order.getOrderStatus() == OrderStatus.PENDING) {
-                order.setOrderStatus(OrderStatus.PREPARING);
-                log.info("Order {} marked as PREPARING", orderId);
-            }
-        }
 
         OrderModel saved = orderRepository.save(order);
         return orderMapper.toDto(saved);
+    }
+
+    private static int getNewServedQuantity(ProductOrderModel po, int quantityServe) {
+        int currentServed = po.getServedQuantity() == null ? 0 : po.getServedQuantity();
+        int totalQuantity = po.getQuantity() == null ? 0 : po.getQuantity();
+        int newServedQuantity = currentServed + quantityServe;
+
+        if (newServedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    String.format("Cannot unserve %d items. Only %d items are currently marked as served",
+                            Math.abs(quantityServe), currentServed)
+            );
+        }
+
+        if (newServedQuantity > totalQuantity) {
+            int remaining = totalQuantity - currentServed;
+            throw new IllegalArgumentException(
+                    String.format("Cannot serve %d items. Only %d remaining out of %d total (Already served: %d)",
+                            quantityServe, remaining, totalQuantity, currentServed)
+            );
+        }
+        return newServedQuantity;
     }
 
     @Override
@@ -431,7 +415,11 @@ public class OrderServiceImpl implements OrderService {
 
         OrderStatus newStatus = changeOrderStatusDto.getStatus();
 
-        if (newStatus.equals(OrderStatus.PAID)) {
+        if (newStatus.equals(OrderStatus.READY)) {
+            order.setOrderStatus(newStatus);
+            this.allServeProductOrders(order.getId());
+        }
+        else if (newStatus.equals(OrderStatus.PAID)) {
             order.setOrderStatus(newStatus);
             order.setPaid(true);
             order.setPaidAt(Instant.now());

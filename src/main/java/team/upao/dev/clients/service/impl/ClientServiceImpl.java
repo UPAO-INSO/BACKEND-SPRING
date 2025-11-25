@@ -100,10 +100,9 @@ public class ClientServiceImpl implements ClientService {
     }
 
     @Override
-    public ClientResponseDto findByDocument(String document) {
-        ClientModel client = clientRepository
-                .findByDocumentNumber(document)
-                .orElseThrow(() -> new NotFoundException("Client not found with document: " + document));
+    public List<ClientResponseDto> findByDocument(String document) {
+        List<ClientModel> client = clientRepository
+                .findByDocumentNumberContaining(document).stream().toList();
 
         return clientMapper.toDto(client);
     }

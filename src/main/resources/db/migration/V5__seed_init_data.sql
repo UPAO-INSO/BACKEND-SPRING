@@ -5,7 +5,11 @@ VALUES (1, 'GERENTE'),
        (4, 'MESERO');
 
 INSERT INTO `persons` (id, name, lastname, phone)
-VALUES (1, 'Gerson', 'Portal', '+51987654321');
+VALUES (1, 'Admin', 'Test', '+51987654321'),
+       (2, '', '', '+51999999999');
+
+INSERT INTO `clients` (id, document_number, email)
+VALUES (2, '00000000', 'gportallinares21@gmail.com');
 
 INSERT INTO `user` (id, username, password, email, role)
 VALUES (1, 'admin', '$2a$12$b8bevAwTSbkRUuWftiqli.aNmCzn5IFryaYgr8e1VWjbTCQWZtkE6', 'admin@email.com', 'ADMIN');

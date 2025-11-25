@@ -70,6 +70,7 @@ public class NubefactInvoiceRequestDto {
     private String totalRetencion; // Optional
     private String totalImpuestosBolsas; // Optional
 
+    @Builder.Default
     private Boolean detraccion = false; // Optional
     @Builder.Default
     private String observaciones = "";
@@ -80,7 +81,10 @@ public class NubefactInvoiceRequestDto {
     private String tipoDeNotaDeCredito; // Optional
     private String tipoDeNotaDeDebito; // Optional
 
+    @Builder.Default
     private Boolean enviarAutomaticamenteALaSunat = false; // Optional
+
+    @Builder.Default
     private Boolean enviarAutomaticamenteAlCliente = true; // Optional
 
     private String condicionesDePago; // Optional

@@ -37,8 +37,6 @@ public class ClientMapper {
                 .email(clientModel.getEmail())
                 .phone(clientModel.getPhone())
                 .documentNumber(clientModel.getDocumentNumber())
-                .createdAt(clientModel.getCreatedAt())
-                .updatedAt(clientModel.getUpdatedAt())
                 .build();
     }
 

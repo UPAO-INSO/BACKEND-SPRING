@@ -10,5 +10,5 @@ import java.util.Optional;
 public interface IClientRepository extends JpaRepository<ClientModel, Long> {
     Optional<ClientModel> findByEmail(String email);
     Optional<ClientModel> findByPhone(String phone);
-    Optional<ClientModel> findByDocumentNumber(String document);
+    Optional<ClientModel> findByDocumentNumberContaining(String documentNumber);
 }

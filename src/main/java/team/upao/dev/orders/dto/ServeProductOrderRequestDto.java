@@ -15,6 +15,5 @@ public class ServeProductOrderRequestDto {
     Long productOrderId;
 
     @NotNull(message = "Quantity cannot be null")
-    @Min(1)
     Integer quantity;
 }

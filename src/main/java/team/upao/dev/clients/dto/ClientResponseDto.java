@@ -4,8 +4,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
-
 @Getter @Setter
 @Builder
 public class ClientResponseDto {
@@ -15,6 +13,4 @@ public class ClientResponseDto {
     private String phone;
     private String documentNumber;
     private String email;
-    private Instant createdAt;
-    private Instant updatedAt;
 }

@@ -9,11 +9,12 @@ import team.upao.dev.products.dto.ProductOrderResponseDto;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 @Getter @Setter
 @Builder
 public class OrderResponseDto {
-    private Long id;
+    private UUID id;
 
     private OrderStatus orderStatus;
 

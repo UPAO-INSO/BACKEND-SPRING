@@ -13,6 +13,7 @@ import team.upao.dev.orders.service.OrderService;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,7 +54,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> findById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponseDto> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.findById(id));
     }
 
@@ -70,7 +71,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> update(@PathVariable Long id, @RequestBody @Valid OrderRequestDto order) {
+    public ResponseEntity<OrderResponseDto> update(@PathVariable UUID id, @RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.update(id, order));
     }
 
@@ -81,7 +82,7 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.delete(id));
     }
 }

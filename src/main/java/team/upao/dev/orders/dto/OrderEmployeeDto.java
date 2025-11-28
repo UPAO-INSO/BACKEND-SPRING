@@ -4,11 +4,13 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 @Getter @Setter
 @Builder
 public class OrderEmployeeDto {
     private Long id;
-    private Long orderId;
+    private UUID orderId;
     private Long employeeId;
     private Integer minutesSpent;
     private String employeeName;

@@ -164,7 +164,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Transactional
-    public void allServeProductOrders(Long orderId) {
+    public void allServeProductOrders(UUID orderId) {
         OrderModel order = this.findModelById(orderId);
 
         for (ProductOrderModel po : order.getProductOrders()) {
@@ -177,7 +177,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponseDto serveProductOrder(ServeProductOrderRequestDto serveProductOrderRequestDto) {
-        long orderId = serveProductOrderRequestDto.getOrderId();
+        UUID orderId = serveProductOrderRequestDto.getOrderId();
         long productOrderId = serveProductOrderRequestDto.getProductOrderId();
         int quantityServe = serveProductOrderRequestDto.getQuantity();
 
@@ -305,7 +305,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponseDto findById(Long id) {
+    public OrderResponseDto findById(UUID id) {
         OrderModel order = orderRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
@@ -325,7 +325,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderModel findModelById(Long id) {
+    public OrderModel findModelById(UUID id) {
         return orderRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
@@ -333,7 +333,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponseDto update(Long id, OrderRequestDto order) {
+    public OrderResponseDto update(UUID id, OrderRequestDto order) {
         OrderModel orderModel = this.findModelById(id);
 
         List<ProductOrderRequestDto> productOrderDtos = order.getProductOrders();
@@ -434,7 +434,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public String delete(Long id) {
+    public String delete(UUID id) {
         this.findModelById(id);
 //        orderRepository.deleteById(id);
 

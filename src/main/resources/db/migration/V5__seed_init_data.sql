@@ -6,7 +6,7 @@ VALUES (1, 'GERENTE'),
 
 INSERT INTO `persons` (id, name, lastname, phone)
 VALUES (1, 'Admin', 'Test', '+51987654321'),
-       (2, '', '', '+51999999999');
+       (2, 'Pagos', 'Test', '+51999999999');
 
 INSERT INTO `clients` (id, document_number, email)
 VALUES (2, '00000000', 'gportallinares21@gmail.com');

@@ -1,6 +1,3 @@
--- Migración para simplificar product_order eliminando product_order_item
--- y agregando served_quantity directamente en product_order
-
 -- 1. Agregar columna served_quantity a product_order
 ALTER TABLE product_order
     ADD COLUMN served_quantity INT NOT NULL DEFAULT 0 AFTER quantity;

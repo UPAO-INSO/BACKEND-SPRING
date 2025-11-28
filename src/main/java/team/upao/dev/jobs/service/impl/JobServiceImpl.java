@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.repository.IJobRepository;
@@ -46,31 +47,22 @@ public class JobServiceImpl implements JobService {
                 entities.getTotalPages(),
                 entities.getTotalElements(),
                 entities.getSize(),
-                entities.getNumber()+1,
+                entities.getNumber() + 1,
                 entities.isEmpty()
         );
     }
 
     @Override
     public JobModel findById(Long id) {
-        Optional<JobModel> job = this.jobRepository.findById(id);
-
-        if(job.isEmpty()) {
-            throw new IllegalArgumentException("Job not found with id: " + id);
-        }
-
-        return job.get();
+        return this.jobRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with id: " + id));
     }
 
     @Override
     public JobModel update(Long id, JobModel job) {
-        Optional<JobModel> existingJob = this.jobRepository.findById(id);
+        JobModel updatedJob = this.findById(id);
 
-        if(existingJob.isEmpty()) {
-            throw new IllegalArgumentException("Job not found with id: " + id);
-        }
-
-        JobModel updatedJob = existingJob.get();
         updatedJob.setTitle(job.getTitle());
         updatedJob.setEmployees(job.getEmployees());
 
@@ -84,14 +76,10 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public JobModel findByTitle(String title) {
-
         JobEnum jobEnum = JobEnum.valueOf(title);
-        Optional<JobModel> job = this.jobRepository.findByTitle(jobEnum);
 
-        if(job.isEmpty()) {
-            throw new IllegalArgumentException("Job not found with title: " + title);
-        }
-
-        return job.get();
+        return this.jobRepository
+                .findByTitle(jobEnum)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with title: " + title));
     }
 }

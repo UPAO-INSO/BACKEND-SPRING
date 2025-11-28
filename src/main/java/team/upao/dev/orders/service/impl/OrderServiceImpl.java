@@ -164,15 +164,14 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Transactional
-    public OrderResponseDto allServeProductOrders(Long orderId) {
+    public void allServeProductOrders(Long orderId) {
         OrderModel order = this.findModelById(orderId);
 
         for (ProductOrderModel po : order.getProductOrders()) {
             po.setServedQuantity(po.getQuantity());
         }
 
-        OrderModel saved = orderRepository.save(order);
-        return orderMapper.toDto(saved);
+        orderRepository.save(order);
     }
 
     @Override
@@ -437,7 +436,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public String delete(Long id) {
         this.findModelById(id);
-        orderRepository.deleteById(id);
+//        orderRepository.deleteById(id);
 
         return "Deleted order with id: " + id;
     }

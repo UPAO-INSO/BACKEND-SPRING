@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.orders.dto.OrderEmployeeDto;
 import team.upao.dev.orders.mapper.OrderEmployeeMapper;
 import team.upao.dev.orders.model.OrderEmployeeModel;
@@ -48,7 +49,11 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
 
     @Override
     public OrderEmployeeDto findById(Long id) {
-        return null;
+        OrderEmployeeModel oEmployeeModel = this.orderEmployeeRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("OrderEmployee not found with id: " + id));
+
+        return orderEmployeeMapper.toDto(oEmployeeModel);
     }
 
     @Override
@@ -58,6 +63,6 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
 
     @Override
     public void delete(Long id) {
-
+        this.findById(id);
     }
 }

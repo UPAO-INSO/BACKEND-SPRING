@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS product
 -- Tabla orders
 CREATE TABLE IF NOT EXISTS `orders`
 (
-    id           BIGINT       NOT NULL AUTO_INCREMENT,
+    id           VARCHAR(36) NOT NULL,
     paid         BOOLEAN      NOT NULL DEFAULT FALSE,
     total_items  INT          NOT NULL DEFAULT 0,
     total_price  DOUBLE       NOT NULL DEFAULT 0,
@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS product_order
     quantity   INT    NOT NULL,
     subtotal   DOUBLE NOT NULL,
     unit_price DOUBLE NOT NULL,
-    order_id   BIGINT NOT NULL,
+    order_id   VARCHAR(36) NOT NULL,
     product_id BIGINT NOT NULL,
     PRIMARY KEY (id),
     KEY idx_po_order_id (order_id),
@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS order_employee
     id            BIGINT NOT NULL AUTO_INCREMENT,
     minutes_spent INT DEFAULT 0,
     employee_id   BIGINT NOT NULL,
-    order_id      BIGINT NOT NULL,
+    order_id      VARCHAR(36) NOT NULL,
     PRIMARY KEY (id),
     KEY idx_order_employee_order_id (order_id),
     KEY idx_order_employee_employee_id (employee_id),

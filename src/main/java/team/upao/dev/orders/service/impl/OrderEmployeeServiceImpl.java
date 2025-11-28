@@ -15,6 +15,7 @@ import team.upao.dev.orders.repository.IOrderEmployeeRepository;
 import team.upao.dev.orders.service.OrderEmployeeService;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderEmployeeModel> entities = this.orderEmployeeRepository.findAll(pageable);
         final List<OrderEmployeeModel> orderEmployeeModels = entities.getContent();
-        List<Long> ordersId =  orderEmployeeModels.stream()
+        List<UUID> ordersId =  orderEmployeeModels.stream()
                 .map(orderEmployeeModel -> orderEmployeeModel.getOrder().getId())
                 .toList();
 

@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.users.dto.UserDto;
 import team.upao.dev.users.dto.UserResponseDto;
@@ -19,7 +19,6 @@ import team.upao.dev.users.repository.IUserRepository;
 import team.upao.dev.users.service.UserService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +42,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public PersonByFullName findByUsernameWithFullName(String username) {
         String names = userRepository.findUserWithFullNameByUsername(username)
-                .orElseThrow(() -> new NotFoundException("Person not found with username: " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("Person not found with username: " + username));
 
         return parseCommaSeparatedFullName(names);
     }
@@ -52,7 +51,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto findById(Long id){
         UserModel user =  userRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         return userMapper.toDto(user);
     }
@@ -61,14 +60,14 @@ public class UserServiceImpl implements UserService {
     public UserModel findModelById(Long id) {
         return userRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
     @Override
     public UserResponseDto findByEmailOrUsername(String query) {
         UserModel user =  userRepository
                 .findByEmailOrUsername(query, query)
-                .orElseThrow(() -> new NotFoundException("User not found with email or username"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email or username"));
 
         return userMapper.toDto(user);
     }
@@ -93,7 +92,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDto findByEmail(String email) {
         UserModel user =  userRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
 
         return userMapper.toDto(user);
     }
@@ -132,10 +131,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto create(UserDto userDto) {
         if (this.existsByUsername(userDto.getUsername())) {
-            throw new NotFoundException("Username already exists: " + userDto.getUsername());
+            throw new ResourceNotFoundException("Username already exists: " + userDto.getUsername());
         }
         if (this.existsByEmail(userDto.getEmail())) {
-            throw new NotFoundException("Email already exists: " + userDto.getEmail());
+            throw new ResourceNotFoundException("Email already exists: " + userDto.getEmail());
         }
         UserModel userModel = userMapper.toModel(userDto);
         UserModel saved = userRepository.save(userModel);
@@ -146,10 +145,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserModel create(UserModel userModel) {
         if (this.existsByUsername(userModel.getUsername())) {
-            throw new NotFoundException("Username already exists: " + userModel.getUsername());
+            throw new ResourceNotFoundException("Username already exists: " + userModel.getUsername());
         }
         if (this.existsByEmail(userModel.getEmail())) {
-            throw new NotFoundException("Email already exists: " + userModel.getEmail());
+            throw new ResourceNotFoundException("Email already exists: " + userModel.getEmail());
         }
         return userRepository.save(userModel);
     }
@@ -176,7 +175,7 @@ public class UserServiceImpl implements UserService {
         UserModel user = findModelById(id);
 
         if (this.existsByUsername(username)) {
-            throw new NotFoundException("Username already exists: " + username);
+            throw new ResourceNotFoundException("Username already exists: " + username);
         }
 
         userRepository.updateUsernameById(id, username);
@@ -191,7 +190,7 @@ public class UserServiceImpl implements UserService {
         UserModel user = findModelById(id);
 
         if (this.existsByEmail(email)) {
-            throw new NotFoundException("Email already exists: " + email);
+            throw new ResourceNotFoundException("Email already exists: " + email);
         }
 
         userRepository.updateEmailById(id, email);

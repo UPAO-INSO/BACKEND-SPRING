@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.products.dto.ProductTypeRequestDto;
 import team.upao.dev.products.dto.ProductTypeResponseDto;
 import team.upao.dev.products.mapper.ProductTypeMapper;
@@ -64,7 +64,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
     public ProductTypeResponseDto findById(Long id) {
         ProductTypeModel product = this.productTypeRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Product type not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with id: " + id));
 
         return productTypeMapper.toDto(product);
     }
@@ -73,14 +73,14 @@ public class ProductTypeServiceImpl implements ProductTypeService {
     public ProductTypeModel findModelById(Long id) {
         return this.productTypeRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Product type not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with id: " + id));
     }
 
     @Override
     public ProductTypeResponseDto findByName(String nameType) {
         ProductTypeModel productTypeModel = this.productTypeRepository
                 .findByName(nameType)
-                .orElseThrow(() -> new NotFoundException("Product type not found with name: " + nameType));
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with name: " + nameType));
 
         return productTypeMapper.toDto(productTypeModel);
     }
@@ -89,7 +89,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
     public ProductTypeModel findModelByName(String nameType) {
         return this.productTypeRepository
                 .findByName(nameType)
-                .orElseThrow(() -> new NotFoundException("Product type not found with name: " + nameType));
+                .orElseThrow(() -> new ResourceNotFoundException("Product type not found with name: " + nameType));
     }
 
     @Override

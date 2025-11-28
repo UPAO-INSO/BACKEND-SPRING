@@ -13,7 +13,7 @@ import team.upao.dev.clients.service.ClientService;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -48,7 +48,7 @@ public class ClientServiceImpl implements ClientService {
     public ClientResponseDto findById(Long id) {
         ClientModel client = this.clientRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Client not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + id));
         return clientMapper.toDto(client);
     }
 
@@ -56,7 +56,7 @@ public class ClientServiceImpl implements ClientService {
     public ClientModel findModelById(Long id) {
         return this.clientRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Client not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + id));
     }
 
     @Override
@@ -85,7 +85,7 @@ public class ClientServiceImpl implements ClientService {
     public ClientResponseDto findByEmail(String email) {
         ClientModel client = clientRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("Client not found with email: " + email));
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found with email: " + email));
 
         return clientMapper.toDto(client);
     }
@@ -94,7 +94,7 @@ public class ClientServiceImpl implements ClientService {
     public ClientResponseDto findByPhone(String phone) {
         ClientModel client = clientRepository
                 .findByPhone(phone)
-                .orElseThrow(() -> new NotFoundException("Client not found with phone: " + phone));
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found with phone: " + phone));
 
         return clientMapper.toDto(client);
     }

@@ -11,7 +11,7 @@ import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.employees.services.EmployeeService;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
 import team.upao.dev.orders.dto.OrderRequestDto;
 import team.upao.dev.orders.dto.OrderResponseDto;
@@ -309,7 +309,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto findById(Long id) {
         OrderModel order = orderRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
         return orderMapper.toDto(order);
     }
@@ -319,7 +319,7 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponseDto> findByTableIds(List<Long> tableIds) {
         List<OrderModel> order = orderRepository
                 .findByTableIdIn(tableIds)
-                .orElseThrow(() -> new NotFoundException("No pending orders found for the given table IDs"));
+                .orElseThrow(() -> new ResourceNotFoundException("No pending orders found for the given table IDs"));
 
         return orderMapper.toDto(order);
     }
@@ -329,7 +329,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderModel findModelById(Long id) {
         return orderRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
     }
 
     @Override

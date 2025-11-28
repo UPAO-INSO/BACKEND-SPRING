@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.DuplicateResourceException;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.products.dto.ProductTypeRequestDto;
 import team.upao.dev.products.dto.ProductTypeResponseDto;
@@ -37,7 +38,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
         ProductTypeModel productTypeModel = productTypeMapper.toModel(productTypeResponseDto);
 
         if (existsByName(productTypeModel.getName())) {
-            throw new IllegalArgumentException("Product type with name: " + productTypeModel.getName() + " already exists");
+            throw new DuplicateResourceException("Product type with name: " + productTypeModel.getName() + " already exists");
         }
 
         productTypeRepository.save(productTypeModel);
@@ -124,7 +125,7 @@ public class ProductTypeServiceImpl implements ProductTypeService {
         findModelById(id);
 
         if (existsByName(nameType)) {
-            throw new IllegalArgumentException("Product type with name: " + nameType + " already exists");
+            throw new DuplicateResourceException("Product type with name: " + nameType + " already exists");
         }
 
         productTypeRepository.updateNameById(id, nameType);

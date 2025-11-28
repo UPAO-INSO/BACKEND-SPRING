@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.DuplicateResourceException;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.tables.dto.TableDto;
 import team.upao.dev.tables.enums.TableStatus;
@@ -69,7 +70,7 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableModel create(TableDto table) {
         if(existsByNumber(table.getNumber())) {
-            throw new ResourceNotFoundException("Table already exists with number: " + table.getNumber());
+            throw new DuplicateResourceException("Table already exists with number: " + table.getNumber());
         }
 
         log.info("Table create: {}", table);
@@ -92,7 +93,8 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public String delete(Long id) {
-        return "";
+        this.findById(id);
+        return String.format("Table deleted with id: %s", id);
     }
 
     @Override

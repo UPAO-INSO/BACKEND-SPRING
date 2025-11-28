@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.DuplicateResourceException;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.persons.dto.PersonByFullName;
 import team.upao.dev.users.dto.UserDto;
@@ -131,10 +132,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponseDto create(UserDto userDto) {
         if (this.existsByUsername(userDto.getUsername())) {
-            throw new ResourceNotFoundException("Username already exists: " + userDto.getUsername());
+            throw new DuplicateResourceException("Username already exists: " + userDto.getUsername());
         }
         if (this.existsByEmail(userDto.getEmail())) {
-            throw new ResourceNotFoundException("Email already exists: " + userDto.getEmail());
+            throw new DuplicateResourceException("Email already exists: " + userDto.getEmail());
         }
         UserModel userModel = userMapper.toModel(userDto);
         UserModel saved = userRepository.save(userModel);
@@ -145,10 +146,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserModel create(UserModel userModel) {
         if (this.existsByUsername(userModel.getUsername())) {
-            throw new ResourceNotFoundException("Username already exists: " + userModel.getUsername());
+            throw new DuplicateResourceException("Username already exists: " + userModel.getUsername());
         }
         if (this.existsByEmail(userModel.getEmail())) {
-            throw new ResourceNotFoundException("Email already exists: " + userModel.getEmail());
+            throw new DuplicateResourceException("Email already exists: " + userModel.getEmail());
         }
         return userRepository.save(userModel);
     }
@@ -175,7 +176,7 @@ public class UserServiceImpl implements UserService {
         UserModel user = findModelById(id);
 
         if (this.existsByUsername(username)) {
-            throw new ResourceNotFoundException("Username already exists: " + username);
+            throw new DuplicateResourceException("Username already exists: " + username);
         }
 
         userRepository.updateUsernameById(id, username);
@@ -190,7 +191,7 @@ public class UserServiceImpl implements UserService {
         UserModel user = findModelById(id);
 
         if (this.existsByEmail(email)) {
-            throw new ResourceNotFoundException("Email already exists: " + email);
+            throw new DuplicateResourceException("Email already exists: " + email);
         }
 
         userRepository.updateEmailById(id, email);

@@ -30,7 +30,11 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonResponseDto findById(Long id) {
-        return null;
+        PersonModel personModel = this.personRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Person not found with id: " + id));
+
+        return personMapper.toDto(personModel);
     }
 
     @Override
@@ -50,7 +54,8 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonResponseDto findByFullName(String name, String lastname) {
-        PersonModel person = personRepository.findByNameAndLastnameContaining(name, lastname)
+        PersonModel person = personRepository
+                .findByNameAndLastnameContaining(name, lastname)
                 .orElseThrow(() -> new ResourceNotFoundException("Person not found with full name: " + name + " " + lastname));
 
         return personMapper.toDto(person);

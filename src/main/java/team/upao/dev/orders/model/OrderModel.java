@@ -33,7 +33,7 @@ public class OrderModel {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @JdbcTypeCode(Types.VARCHAR)
-    @Column(name = "id", length = 36, nullable = false, columnDefinition = "VARCHAR(36)")
+    @Column(name = "id", length = 36, nullable = false, updatable = false, columnDefinition = "VARCHAR(36)")
     private UUID id;
 
     @Enumerated(EnumType.STRING)

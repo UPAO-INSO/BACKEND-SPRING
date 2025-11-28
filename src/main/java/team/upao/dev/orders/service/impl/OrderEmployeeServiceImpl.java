@@ -8,7 +8,7 @@ import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.exceptions.ResourceNotFoundException;
-import team.upao.dev.orders.dto.OrderEmployeeDto;
+import team.upao.dev.orders.dto.OrderEmployeeResponseDto;
 import team.upao.dev.orders.mapper.OrderEmployeeMapper;
 import team.upao.dev.orders.model.OrderEmployeeModel;
 import team.upao.dev.orders.repository.IOrderEmployeeRepository;
@@ -24,12 +24,12 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     private final OrderEmployeeMapper orderEmployeeMapper;
 
     @Override
-    public OrderEmployeeDto create(OrderEmployeeModel orderEmployee) {
+    public OrderEmployeeResponseDto create(OrderEmployeeModel orderEmployee) {
         return orderEmployeeMapper.toDto(orderEmployeeRepository.save(orderEmployee));
     }
 
     @Override
-    public PaginationResponseDto<OrderEmployeeDto> findAll(PaginationRequestDto requestDto) {
+    public PaginationResponseDto<OrderEmployeeResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<OrderEmployeeModel> entities = this.orderEmployeeRepository.findAll(pageable);
         final List<OrderEmployeeModel> orderEmployeeModels = entities.getContent();
@@ -37,7 +37,7 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
                 .map(orderEmployeeModel -> orderEmployeeModel.getOrder().getId())
                 .toList();
 
-        final List<OrderEmployeeDto> orderEmployeeDtos = orderEmployeeMapper.toDto(entities.getContent());
+        final List<OrderEmployeeResponseDto> orderEmployeeDtos = orderEmployeeMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
                 orderEmployeeDtos,
                 entities.getTotalPages(),
@@ -49,7 +49,7 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     }
 
     @Override
-    public OrderEmployeeDto findById(Long id) {
+    public OrderEmployeeResponseDto findById(Long id) {
         OrderEmployeeModel oEmployeeModel = this.orderEmployeeRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("OrderEmployee not found with id: " + id));
@@ -58,7 +58,7 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     }
 
     @Override
-    public OrderEmployeeDto update(Long id, OrderEmployeeDto orderEmployee) {
+    public OrderEmployeeResponseDto update(Long id, OrderEmployeeResponseDto orderEmployee) {
         return null;
     }
 

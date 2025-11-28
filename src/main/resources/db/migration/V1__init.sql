@@ -78,16 +78,22 @@ CREATE TABLE IF NOT EXISTS `tables`
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
 
--- Tabla clients (usa el mismo id que persons)
-CREATE TABLE IF NOT EXISTS clients
+-- Tabla customers (usa el mismo id que persons)
+CREATE TABLE IF NOT EXISTS customers
 (
-    id              BIGINT       NOT NULL,
-    document_number VARCHAR(255) NOT NULL,
-    email           VARCHAR(255) NOT NULL,
+    id               BIGINT              NOT NULL,
+    document_number  VARCHAR(20)         NOT NULL,
+    document_type    ENUM ('DNI', 'RUC') NOT NULL,
+    email            VARCHAR(200)        NOT NULL,
+    departament      VARCHAR(100)        NOT NULL,
+    province         VARCHAR(100)        NOT NULL,
+    district         VARCHAR(100)        NOT NULL,
+    complete_address VARCHAR(255)        NOT NULL,
+
     PRIMARY KEY (id),
-    KEY idx_clients_document_number (document_number),
-    KEY idx_clients_email (email),
-    CONSTRAINT fk_clients_person FOREIGN KEY (id) REFERENCES persons (id)
+    KEY idx_customers_document_number (document_number),
+    KEY idx_customers_email (email),
+    CONSTRAINT fk_customers_person FOREIGN KEY (id) REFERENCES persons (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -132,7 +138,7 @@ CREATE TABLE IF NOT EXISTS product
 -- Tabla orders
 CREATE TABLE IF NOT EXISTS `orders`
 (
-    id           VARCHAR(36) NOT NULL,
+    id           VARCHAR(36)  NOT NULL,
     paid         BOOLEAN      NOT NULL DEFAULT FALSE,
     total_items  INT          NOT NULL DEFAULT 0,
     total_price  DOUBLE       NOT NULL DEFAULT 0,
@@ -142,12 +148,12 @@ CREATE TABLE IF NOT EXISTS `orders`
     table_id     BIGINT       NULL,
     comment      VARCHAR(255) NULL,
     order_status VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
-    client_id    BIGINT       NULL,
+    customer_id  BIGINT       NULL,
     PRIMARY KEY (id),
     KEY idx_orders_table_id (table_id),
-    KEY idx_orders_client_id (client_id),
+    KEY idx_orders_customer_id (customer_id),
     CONSTRAINT fk_orders_table FOREIGN KEY (table_id) REFERENCES `tables` (id),
-    CONSTRAINT fk_orders_client FOREIGN KEY (client_id) REFERENCES clients (id)
+    CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;
@@ -155,12 +161,12 @@ CREATE TABLE IF NOT EXISTS `orders`
 -- Tabla product_order
 CREATE TABLE IF NOT EXISTS product_order
 (
-    id         BIGINT NOT NULL AUTO_INCREMENT,
-    quantity   INT    NOT NULL,
-    subtotal   DOUBLE NOT NULL,
-    unit_price DOUBLE NOT NULL,
+    id         BIGINT      NOT NULL AUTO_INCREMENT,
+    quantity   INT         NOT NULL,
+    subtotal   DOUBLE      NOT NULL,
+    unit_price DOUBLE      NOT NULL,
     order_id   VARCHAR(36) NOT NULL,
-    product_id BIGINT NOT NULL,
+    product_id BIGINT      NOT NULL,
     PRIMARY KEY (id),
     KEY idx_po_order_id (order_id),
     KEY idx_po_product_id (product_id),
@@ -173,9 +179,9 @@ CREATE TABLE IF NOT EXISTS product_order
 -- Tabla order_employee
 CREATE TABLE IF NOT EXISTS order_employee
 (
-    id            BIGINT NOT NULL AUTO_INCREMENT,
+    id            BIGINT      NOT NULL AUTO_INCREMENT,
     minutes_spent INT DEFAULT 0,
-    employee_id   BIGINT NOT NULL,
+    employee_id   BIGINT      NOT NULL,
     order_id      VARCHAR(36) NOT NULL,
     PRIMARY KEY (id),
     KEY idx_order_employee_order_id (order_id),

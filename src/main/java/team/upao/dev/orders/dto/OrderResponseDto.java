@@ -37,5 +37,5 @@ public class OrderResponseDto {
     private List<ProductOrderResponseDto> productOrders;
 
     @NotNull
-    private List<OrderEmployeeDto> orderEmployees;
+    private List<OrderEmployeeResponseDto> orderEmployees;
 }

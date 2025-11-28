@@ -19,6 +19,8 @@ services:
       - CULQI_RSA_ID=${CULQI_RSA_ID}
       - CULQI_SECRET_KEY=${CULQI_SECRET_KEY}
       - CULQI_PUBLIC_KEY=${CULQI_PUBLIC_KEY}
+      - FACTILIZA_API_URL=${FACTILIZA_API_URL}
+      - FACTILIZA_API_TOKEN=${FACTILIZA_API_TOKEN}
     restart: on-failure
 
   db:

@@ -401,7 +401,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderModel.setOrderStatus(order.getOrderStatus());
         orderModel.setComment(order.getComment());
-        orderModel.setPaid(order.getPaid());
 
         OrderModel saved = orderRepository.save(orderModel);
         return orderMapper.toDto(saved);

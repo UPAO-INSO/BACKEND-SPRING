@@ -8,8 +8,8 @@ INSERT INTO `persons` (id, name, lastname, phone)
 VALUES (1, 'Admin', 'Test', '+51987654321'),
        (2, 'Pagos', 'Test', '+51999999999');
 
-INSERT INTO `clients` (id, document_number, email)
-VALUES (2, '00000000', 'gportallinares21@gmail.com');
+INSERT INTO `customers` (id, document_type, document_number, email, departament, province, district, complete_address)
+VALUES (2, 'DNI','00000000', 'gportallinares21@gmail.com', 'LA LIBERTAD', 'TRUJILLO', 'TRUJILLO', 'AV. LOS INCAS 123');
 
 INSERT INTO `user` (id, username, password, email, role)
 VALUES (1, 'admin', '$2a$12$b8bevAwTSbkRUuWftiqli.aNmCzn5IFryaYgr8e1VWjbTCQWZtkE6', 'admin@email.com', 'ADMIN');

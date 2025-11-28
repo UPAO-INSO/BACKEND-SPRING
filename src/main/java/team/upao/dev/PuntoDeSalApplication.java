@@ -3,10 +3,9 @@ package team.upao.dev;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication(exclude = {GsonAutoConfiguration.class})
+@SpringBootApplication
 @EnableJpaAuditing
 @OpenAPIDefinition
 public class PuntoDeSalApplication {

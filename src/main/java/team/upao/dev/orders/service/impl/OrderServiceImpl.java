@@ -34,6 +34,9 @@ import team.upao.dev.products.service.ProductService;
 import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 import team.upao.dev.tables.service.TableService;
+import team.upao.dev.inventory.dto.ProductInventoryResponseDto;  
+import team.upao.dev.inventory.service.ProductInventoryService;  
+import team.upao.dev.inventory.service.InventoryService; 
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -51,6 +54,10 @@ public class OrderServiceImpl implements OrderService {
     private final ProductService productService;
     private final EmployeeService employeeService;
     private final ProductOrderMapper productOrderMapper;
+
+    // NUEVOS INYECTADOS
+    private final ProductInventoryService productInventoryService;
+    private final InventoryService inventoryService;
 
     private BigDecimal resolveUnitPrice(ProductOrderModel productOrderModel) {
         if (productOrderModel == null) return BigDecimal.ZERO;
@@ -440,6 +447,7 @@ public class OrderServiceImpl implements OrderService {
             order.setPaidAt(Instant.now());
             return orderMapper.toDto(orderRepository.save(order));
         } else if (newStatus.equals(OrderStatus.COMPLETED)) {
+            this.deductInventoryForOrder(order);// HU5: DEDUCIR STOCK AL COMPLETAR ORDEN
             tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
         }
 
@@ -454,5 +462,46 @@ public class OrderServiceImpl implements OrderService {
 //        orderRepository.deleteById(id);
 
         return "Deleted order with id: " + id;
+    }
+
+    private void deductInventoryForOrder(OrderModel order) {
+        log.info("Iniciando deducción de inventario para orden ID: {}", order.getId());
+        
+        // Validar stock antes de procesar
+        for (ProductOrderModel productOrder : order.getProductOrders()) {
+            Long productId = productOrder.getProduct().getId();
+            Integer quantity = productOrder.getQuantity();
+            
+            // Verificar si el producto puede venderse (tiene suficiente stock de ingredientes)
+            if (!productInventoryService.canSellProduct(productId, java.math.BigDecimal.valueOf(quantity))) {
+                log.error("Stock insuficiente para producto ID: {}", productId);
+                throw new IllegalArgumentException(
+                    String.format("Stock insuficiente de ingredientes para el producto: %s", 
+                        productOrder.getProduct().getName())
+                );
+            }
+        }
+        
+        // Si todo está ok, descontar
+        for (ProductOrderModel productOrder : order.getProductOrders()) {
+            Long productId = productOrder.getProduct().getId();
+            Integer quantityOrdered = productOrder.getQuantity();
+            
+            // Obtener receta del producto
+            List<ProductInventoryResponseDto> recipe = productInventoryService.getRecipeByProductId(productId);
+            
+            // Descontar cada ingrediente
+            for (ProductInventoryResponseDto ingredient : recipe) {
+                java.math.BigDecimal quantityToDeduct = ingredient.getQuantity()
+                    .multiply(java.math.BigDecimal.valueOf(quantityOrdered));
+                
+                inventoryService.deductStock(ingredient.getInventoryId(), quantityToDeduct);
+                log.info("Deducido {} {} de {} para la orden {}", 
+                    quantityToDeduct, ingredient.getUnitOfMeasure(), 
+                    ingredient.getInventoryName(), order.getId());
+            }
+        }
+        
+        log.info("Deducción de inventario completada para orden ID: {}", order.getId());
     }
 }

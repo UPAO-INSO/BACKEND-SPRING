@@ -3,6 +3,7 @@ package team.upao.dev.products.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import team.upao.dev.inventory.model.ProductInventoryModel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,4 +47,9 @@ public class ProductModel {
     @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductOrderModel> productOrders = new ArrayList<>();
+
+    // Relación con la tabla ProductInventoryModel
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductInventoryModel> productInventory = new ArrayList<>();
+
 }

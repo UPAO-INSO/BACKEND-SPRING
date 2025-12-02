@@ -5,6 +5,7 @@ import team.upao.dev.inventory.dto.InventoryResponseDto;
 import team.upao.dev.inventory.dto.InventoryFilterDto;
 import team.upao.dev.inventory.dto.InventoryUpdateDto;
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.inventory.model.InventoryModel;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
@@ -26,8 +27,8 @@ public interface InventoryService {
 
     InventoryResponseDto update(Long id, InventoryUpdateDto request);
 
-    void deductStock(Long inventoryId, BigDecimal quantity); //Se ejecuta automáticamente al completar orden
-    boolean hasEnoughStock(Long inventoryId, BigDecimal quantity);
+    void deductStock(Long inventoryId, BigDecimal quantity, UnitOfMeasure unit);
+    boolean hasEnoughStock(Long inventoryId, BigDecimal quantity, UnitOfMeasure unit);
     InventoryModel findModelById(Long id);
     
     void delete(Long id);

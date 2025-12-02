@@ -9,9 +9,10 @@ import team.upao.dev.orders.model.OrderModel;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface IOrderRepository extends JpaRepository<OrderModel, Long> {
+public interface IOrderRepository extends JpaRepository<OrderModel, UUID> {
     Page<OrderModel> findAllByOrderStatus(Pageable pageable, OrderStatus status);
     Page<OrderModel> findAllByOrderStatusIn(Pageable pageable, List<OrderStatus> orderStatuses);
     Page<OrderModel> findAllByTableIdInAndOrderStatusIn(Pageable pageable, List<Long> tableIds, List<OrderStatus> orderStatuses);

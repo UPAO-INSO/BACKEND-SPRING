@@ -6,8 +6,6 @@ import lombok.*;
 import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.products.enums.ProductOrderStatus;
 
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
@@ -31,6 +29,10 @@ public class ProductOrderModel {
     @Column(nullable = false)
     private Double subtotal;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer servedQuantity = 0;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -44,8 +46,4 @@ public class ProductOrderModel {
     @JoinColumn(name = "product_id", nullable = false)
     @JsonBackReference("order-productOrders")
     private ProductModel product;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "productOrder", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductOrderItemModel> items = new ArrayList<>();
 }

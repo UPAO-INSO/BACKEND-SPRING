@@ -2,6 +2,8 @@ package team.upao.dev.inventory.service;
 
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
+import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public interface ProductInventoryService {
     /**
      * Modificar cantidad de insumo en una receta
      */
-    ProductInventoryResponseDto updateProductInventory(Long id, ProductInventoryRequestDto request);
+    ProductInventoryResponseDto updateProductInventory(Long id, ProductInventoryUpdateDto request);
     
     // =============================================
     // HU5: VALIDACIÓN PARA VENTAS

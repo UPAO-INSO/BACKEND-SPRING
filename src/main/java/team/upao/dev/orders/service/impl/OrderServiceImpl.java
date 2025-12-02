@@ -11,7 +11,7 @@ import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.employees.services.EmployeeService;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
 import team.upao.dev.orders.dto.OrderRequestDto;
 import team.upao.dev.orders.dto.OrderResponseDto;
@@ -23,12 +23,9 @@ import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.orders.repository.IOrderRepository;
 import team.upao.dev.orders.service.OrderService;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
-import team.upao.dev.products.enums.ProductOrderItemStatus;
-import team.upao.dev.products.enums.ProductOrderStatus;
 import team.upao.dev.products.enums.ProductTypeEnum;
 import team.upao.dev.products.mapper.ProductOrderMapper;
 import team.upao.dev.products.model.ProductModel;
-import team.upao.dev.products.model.ProductOrderItemModel;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.tables.enums.TableStatus;
@@ -173,85 +170,68 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toDto(saved);
     }
 
+    @Transactional
+    public void allServeProductOrders(UUID orderId) {
+        OrderModel order = this.findModelById(orderId);
+
+        for (ProductOrderModel po : order.getProductOrders()) {
+            po.setServedQuantity(po.getQuantity());
+        }
+
+        orderRepository.save(order);
+    }
+
     @Override
     @Transactional
     public OrderResponseDto serveProductOrder(ServeProductOrderRequestDto serveProductOrderRequestDto) {
-        long orderId = serveProductOrderRequestDto.getOrderId();
+        UUID orderId = serveProductOrderRequestDto.getOrderId();
         long productOrderId = serveProductOrderRequestDto.getProductOrderId();
-        int quantityToServe = serveProductOrderRequestDto.getQuantity();
+        int quantityServe = serveProductOrderRequestDto.getQuantity();
 
-        if (quantityToServe <= 0) throw new IllegalArgumentException("Quantity to serve must be > 0");
+        if (quantityServe == 0) {
+            throw new IllegalArgumentException("Quantity cannot be 0");
+        }
 
         OrderModel order = this.findModelById(orderId);
+
+        if (order.getOrderStatus() == OrderStatus.COMPLETED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException("Cannot modify items for a " + order.getOrderStatus() + " order");
+        }
 
         ProductOrderModel po = order.getProductOrders()
                 .stream()
                 .filter(p -> p.getId() != null && p.getId().equals(productOrderId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("ProductOrder not found"));
+                .orElseThrow(() -> new IllegalArgumentException("ProductOrder with id " + productOrderId + " not found in order " + orderId));
 
-        if (po.getItems() == null || po.getItems().isEmpty()) {
-            ProductOrderItemModel base = ProductOrderItemModel.builder()
-                    .quantity(po.getQuantity() == null ? 0 : po.getQuantity())
-                    .preparedQuantity(0)
-                    .servedQuantity(0)
-                    .status(ProductOrderItemStatus.PENDING)
-                    .productOrder(po)
-                    .build();
-            po.setItems(new ArrayList<>(List.of(base)));
-        }
+        int newServedQuantity = getNewServedQuantity(po, quantityServe);
 
-        int remainingToServe = quantityToServe;
-
-        for (ProductOrderItemModel item : po.getItems()) {
-            if (remainingToServe <= 0) break;
-
-            int itemRemaining = (item.getQuantity() == null ? 0 : item.getQuantity()) - (item.getServedQuantity() == null ? 0 : item.getServedQuantity());
-            if (itemRemaining <= 0) continue;
-
-            int serve = Math.min(itemRemaining, remainingToServe);
-            item.setServedQuantity((item.getServedQuantity() == null ? 0 : item.getServedQuantity()) + serve);
-            remainingToServe -= serve;
-
-            if (item.getServedQuantity() >= item.getQuantity()) {
-                item.setStatus(ProductOrderItemStatus.SERVED);
-            } else {
-                item.setStatus(ProductOrderItemStatus.PREPARING);
-            }
-        }
-
-        if (remainingToServe > 0) {
-            throw new IllegalArgumentException("Not enough remaining quantity to serve. Remaining: " + remainingToServe);
-        }
-
-        int totalServed = po.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
-        int totalQty = po.getQuantity() == null ? 0 : po.getQuantity();
-
-        if (totalServed >= totalQty && totalQty > 0) {
-            po.setStatus(ProductOrderStatus.SERVED);
-        } else if (totalServed > 0) {
-            po.setStatus(ProductOrderStatus.PREPARING);
-        } else {
-            po.setStatus(ProductOrderStatus.PENDING);
-        }
-
-        boolean allServed = order.getProductOrders()
-                .stream()
-                .allMatch(p -> {
-                    int served = p.getItems() == null ? 0 : p.getItems().stream().mapToInt(i -> i.getServedQuantity() == null ? 0 : i.getServedQuantity()).sum();
-                    int qty = p.getQuantity() == null ? 0 : p.getQuantity();
-                    return qty > 0 && served >= qty;
-                });
-
-//        if (allServed) {
-//            order.setOrderStatus(OrderStatus.COMPLETED);
-//            if (order.getTable() != null) {
-//                tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
-//            }
-//        }
+        po.setServedQuantity(newServedQuantity);
 
         OrderModel saved = orderRepository.save(order);
         return orderMapper.toDto(saved);
+    }
+
+    private static int getNewServedQuantity(ProductOrderModel po, int quantityServe) {
+        int currentServed = po.getServedQuantity() == null ? 0 : po.getServedQuantity();
+        int totalQuantity = po.getQuantity() == null ? 0 : po.getQuantity();
+        int newServedQuantity = currentServed + quantityServe;
+
+        if (newServedQuantity < 0) {
+            throw new IllegalArgumentException(
+                    String.format("Cannot unserve %d items. Only %d items are currently marked as served",
+                            Math.abs(quantityServe), currentServed)
+            );
+        }
+
+        if (newServedQuantity > totalQuantity) {
+            int remaining = totalQuantity - currentServed;
+            throw new IllegalArgumentException(
+                    String.format("Cannot serve %d items. Only %d remaining out of %d total (Already served: %d)",
+                            quantityServe, remaining, totalQuantity, currentServed)
+            );
+        }
+        return newServedQuantity;
     }
 
     @Override
@@ -332,10 +312,10 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponseDto findById(Long id) {
+    public OrderResponseDto findById(UUID id) {
         OrderModel order = orderRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
 
         return orderMapper.toDto(order);
     }
@@ -345,22 +325,22 @@ public class OrderServiceImpl implements OrderService {
     public List<OrderResponseDto> findByTableIds(List<Long> tableIds) {
         List<OrderModel> order = orderRepository
                 .findByTableIdIn(tableIds)
-                .orElseThrow(() -> new NotFoundException("No pending orders found for the given table IDs"));
+                .orElseThrow(() -> new ResourceNotFoundException("No pending orders found for the given table IDs"));
 
         return orderMapper.toDto(order);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public OrderModel findModelById(Long id) {
+    public OrderModel findModelById(UUID id) {
         return orderRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
     }
 
     @Override
     @Transactional
-    public OrderResponseDto update(Long id, OrderRequestDto order) {
+    public OrderResponseDto update(UUID id, OrderRequestDto order) {
         OrderModel orderModel = this.findModelById(id);
 
         List<ProductOrderRequestDto> productOrderDtos = order.getProductOrders();
@@ -383,7 +363,7 @@ public class OrderServiceImpl implements OrderService {
             return list;
         });
 
-        java.util.Set<Long> incomingIds = incoming.stream()
+        Set<Long> incomingIds = incoming.stream()
                 .map(p -> p.getProduct() == null ? null : p.getProduct().getId())
                 .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toSet());
@@ -428,7 +408,6 @@ public class OrderServiceImpl implements OrderService {
 
         orderModel.setOrderStatus(order.getOrderStatus());
         orderModel.setComment(order.getComment());
-        orderModel.setPaid(order.getPaid());
 
         OrderModel saved = orderRepository.save(orderModel);
         return orderMapper.toDto(saved);
@@ -441,10 +420,15 @@ public class OrderServiceImpl implements OrderService {
 
         OrderStatus newStatus = changeOrderStatusDto.getStatus();
 
-        if (newStatus.equals(OrderStatus.PAID)) {
+        if (newStatus.equals(OrderStatus.READY)) {
+            order.setOrderStatus(newStatus);
+            this.allServeProductOrders(order.getId());
+        }
+        else if (newStatus.equals(OrderStatus.PAID)) {
             order.setOrderStatus(newStatus);
             order.setPaid(true);
             order.setPaidAt(Instant.now());
+            tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
             return orderMapper.toDto(orderRepository.save(order));
         } else if (newStatus.equals(OrderStatus.COMPLETED)) {
             this.deductInventoryForOrder(order);// HU5: DEDUCIR STOCK AL COMPLETAR ORDEN
@@ -457,51 +441,74 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public String delete(Long id) {
-        OrderModel order = this.findModelById(id);
+    public String delete(UUID id) {
+        this.findModelById(id);
 //        orderRepository.deleteById(id);
 
         return "Deleted order with id: " + id;
     }
 
+    @Transactional
     private void deductInventoryForOrder(OrderModel order) {
         log.info("Iniciando deducción de inventario para orden ID: {}", order.getId());
-        
-        // Validar stock antes de procesar
-        for (ProductOrderModel productOrder : order.getProductOrders()) {
-            Long productId = productOrder.getProduct().getId();
-            Integer quantity = productOrder.getQuantity();
-            
-            // Verificar si el producto puede venderse (tiene suficiente stock de ingredientes)
-            if (!productInventoryService.canSellProduct(productId, java.math.BigDecimal.valueOf(quantity))) {
-                log.error("Stock insuficiente para producto ID: {}", productId);
-                throw new IllegalArgumentException(
-                    String.format("Stock insuficiente de ingredientes para el producto: %s", 
-                        productOrder.getProduct().getName())
-                );
-            }
-        }
-        
-        // Si todo está ok, descontar
-        for (ProductOrderModel productOrder : order.getProductOrders()) {
-            Long productId = productOrder.getProduct().getId();
-            Integer quantityOrdered = productOrder.getQuantity();
-            
-            // Obtener receta del producto
-            List<ProductInventoryResponseDto> recipe = productInventoryService.getRecipeByProductId(productId);
-            
-            // Descontar cada ingrediente
-            for (ProductInventoryResponseDto ingredient : recipe) {
-                java.math.BigDecimal quantityToDeduct = ingredient.getQuantity()
-                    .multiply(java.math.BigDecimal.valueOf(quantityOrdered));
+    
+     try{
+            // Validar stock antes de procesar
+            for (ProductOrderModel productOrder : order.getProductOrders()) {
+                Long productId = productOrder.getProduct().getId();
+                Integer quantity = productOrder.getQuantity();
                 
-                inventoryService.deductStock(ingredient.getInventoryId(), quantityToDeduct);
-                log.info("Deducido {} {} de {} para la orden {}", 
-                    quantityToDeduct, ingredient.getUnitOfMeasure(), 
-                    ingredient.getInventoryName(), order.getId());
+                // Verificar si el producto puede venderse (tiene suficiente stock de ingredientes)
+                if (!productInventoryService.canSellProduct(productId, java.math.BigDecimal.valueOf(quantity))) {
+                    log.error("Stock insuficiente para producto ID: {}", productId);
+                    throw new IllegalArgumentException(
+                        String.format("Stock insuficiente de ingredientes para el producto: %s", 
+                            productOrder.getProduct().getName())
+                    );
+                }
             }
+            
+            // Si todo está ok, descontar
+            for (ProductOrderModel productOrder : order.getProductOrders()) {
+                Long productId = productOrder.getProduct().getId();
+                Integer quantityOrdered = productOrder.getQuantity();
+                
+                // Obtener receta del producto
+                List<ProductInventoryResponseDto> recipe = productInventoryService.getRecipeByProductId(productId);
+                // 🔴 LOG IMPORTANTE: imprimir la receta completa
+                log.info(
+                    "Receta para producto {} ({}): {} ingrediente(s)",
+                    productId,
+                    productOrder.getProduct().getName(),
+                    recipe.size()
+                );
+
+
+                // Descontar cada ingrediente
+                for (ProductInventoryResponseDto ingredient : recipe) {
+                    // Calcular cantidad a deducir
+                    java.math.BigDecimal quantityToDeduct = ingredient.getQuantity()
+                        .multiply(java.math.BigDecimal.valueOf(quantityOrdered));
+                    
+                    log.info("Deducido {} {} de {} para la orden {}", 
+                        quantityToDeduct, ingredient.getUnitOfMeasure(), 
+                        ingredient.getInventoryName(), order.getId());
+                    
+                    inventoryService.deductStock(
+                        ingredient.getInventoryId(),
+                        quantityToDeduct,
+                        ingredient.getUnitOfMeasure()
+                    );
+                }
+            }
+            log.info("Deducción completada exitosamente para orden: {}", order.getId());
+            
+        } catch (IllegalArgumentException e) {
+            log.error("Error en deducción de inventario: {}", e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Error inesperado en deducción: {}", e.getMessage());
+            throw new RuntimeException("Error al procesar deducción de inventario", e);
         }
-        
-        log.info("Deducción de inventario completada para orden ID: {}", order.getId());
     }
 }

@@ -1,5 +1,6 @@
 package team.upao.dev.inventory.model;
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -24,8 +25,9 @@ public class InventoryModel {
     @Column(nullable = false)
     private InventoryType type;  // INGREDIENT, BEVERAGE, DISPOSABLE 
     
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String unitOfMeasure;  // Unidad de medida para los insumos (ej. kg, litro, unidad)
+    private UnitOfMeasure unitOfMeasure; // Unidad de medida para los insumos (ej. kg, litro, unidad)
 
     // Getters y setters
 }

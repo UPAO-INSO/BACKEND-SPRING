@@ -4,18 +4,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import team.upao.dev.exceptions.NotFoundException;
+
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
+import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.inventory.mapper.ProductInventoryMapper;
 import team.upao.dev.inventory.model.InventoryModel;
 import team.upao.dev.inventory.model.ProductInventoryModel;
 import team.upao.dev.inventory.repository.IInventoryRepository;
 import team.upao.dev.inventory.repository.IProductInventoryRepository;
+import team.upao.dev.inventory.service.InventoryValidationService;
+import team.upao.dev.inventory.service.InventoryConversionService;
+import team.upao.dev.inventory.service.ProductInventoryService;
 import team.upao.dev.products.model.ProductModel;
 import team.upao.dev.products.repository.IProductRepository;
-import team.upao.dev.inventory.service.InventoryService;
-import team.upao.dev.inventory.service.ProductInventoryService;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -28,7 +32,8 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     private final ProductInventoryMapper productInventoryMapper;
     private final IProductRepository productRepository;
     private final IInventoryRepository inventoryRepository;
-    private final InventoryService inventoryService;
+    private final InventoryValidationService validationService;
+    private final InventoryConversionService conversionService;
 
 
     @Override
@@ -36,26 +41,39 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     public ProductInventoryResponseDto createProductInventory(ProductInventoryRequestDto request) {
         log.info("Registrando receta: productId={}, inventoryId={}", 
             request.getProductId(), request.getInventoryId());
-        
+
+        validationService.validateQuantity(request.getQuantity());
+        validationService.validateUnit(request.getUnitOfMeasure());
+
         // Obtener producto
         ProductModel product = productRepository.findById(request.getProductId())
             .orElseThrow(() -> {
                 log.error("Producto no encontrado: {}", request.getProductId());
-                return new NotFoundException("Producto no encontrado");
+                return new ResourceNotFoundException("Producto no encontrado");
             });
         
         // Obtener insumo/ingrediente
         InventoryModel inventory = inventoryRepository.findById(request.getInventoryId())
             .orElseThrow(() -> {
                 log.error("Inventario no encontrado: {}", request.getInventoryId());
-                return new NotFoundException("Inventario no encontrado");
+                return new ResourceNotFoundException("Inventario no encontrado");
             });
         
+        ProductInventoryModel tempModel = ProductInventoryModel.builder()
+            .unitOfMeasure(request.getUnitOfMeasure())
+            .inventory(inventory)
+            .product(product)
+            .build();
+        
+        validationService.validateUnitCompatibility(tempModel, inventory);    
+
         // Mapear y guardar
         ProductInventoryModel model = productInventoryMapper.toModel(request, product, inventory);
         ProductInventoryModel saved = productInventoryRepository.save(model);
         
-        log.info("Relación registrada exitosamente con ID: {}", saved.getId());
+        log.info("Relación registrada: ID={}, Producto={}, Ingrediente={}, Cantidad={} {}", 
+            saved.getId(), product.getName(), inventory.getName(),
+            saved.getQuantity(), saved.getUnitOfMeasure().getSymbol());
         return productInventoryMapper.toDto(saved);
     }
   
@@ -65,7 +83,7 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
         ProductInventoryModel model = productInventoryRepository.findById(id)
             .orElseThrow(() -> {
                 log.error("Relación no encontrada: {}", id);
-                return new NotFoundException("Relación producto-inventario no encontrada");
+                return new ResourceNotFoundException("Relación producto-inventario no encontrada");
             });
         return productInventoryMapper.toDto(model);
     }
@@ -78,17 +96,20 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
         // Verificar que el producto existe
         if (!productRepository.existsById(productId)) {
             log.error("Producto no encontrado: {}", productId);
-            throw new NotFoundException("Producto no encontrado");
+            throw new ResourceNotFoundException("Producto no encontrado");
         }
         
         List<ProductInventoryModel> models = productInventoryRepository.findByProductId(productId);
+
 
         if (models.isEmpty()) {
             log.warn("El producto {} no tiene receta definida", productId);
         }
 
-        log.debug("Receta encontrada con {} ingredientes", models.size());
-        
+        log.info("Receta encontrada con {} ingredientes:", models.size());
+        models.forEach(m -> 
+            log.info(" → Ingrediente: {} ({})", m.getInventory().getName(), m.getQuantity())
+        );
         return productInventoryMapper.toDto(models);
     }
 
@@ -111,27 +132,91 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     // =============================================
     @Override
     @Transactional      
-    public ProductInventoryResponseDto updateProductInventory(Long id, ProductInventoryRequestDto request) {
+    public ProductInventoryResponseDto updateProductInventory(Long id, ProductInventoryUpdateDto request) {
         log.info("Actualizando relación producto-inventario ID: {}", id);
+
+        validationService.validateQuantity(request.getQuantity());
+        validationService.validateUnit(request.getUnitOfMeasure());
         
         ProductInventoryModel existing = productInventoryRepository.findById(id)
             .orElseThrow(() -> {
                 log.error("Relación no encontrada: {}", id);
-                return new NotFoundException("Relación no encontrada");
+                return new ResourceNotFoundException("Relación no encontrada");
             });
+       ProductModel currentProduct = existing.getProduct();
+       InventoryModel currentInventory = existing.getInventory();
 
-        // Verificar si el producto es una bebida o un producto con receta(falta añadir descartable)
-        /*boolean isBeverage = existing.getProduct().getProductType().getName().equalsIgnoreCase("BEVERAGE");
+        // Guardar unidades anteriores por si hay cambio
+        UnitOfMeasure oldUnit = existing.getUnitOfMeasure();
 
-        if (isBeverage) {   
-            // Si es una bebida, solo actualizamos el inventario (quantity) y no la receta
-            existing.getInventory().setQuantity(request.getQuantity());
-        } else {*/
-            // Si es un producto con receta (plato), actualizamos la cantidad y unidad de medida en la receta
-            existing.setQuantity(request.getQuantity());
-            existing.setUnitOfMeasure(request.getUnitOfMeasure());
-        //}
         
+        ProductModel newProduct = currentProduct;
+        if (request.getProductId() != null && 
+            !request.getProductId().equals(currentProduct.getId())) {
+
+            newProduct = productRepository.findById(request.getProductId())
+                .orElseThrow(() -> {
+                    log.error("Producto no encontrado: {}", request.getProductId());
+                    return new ResourceNotFoundException("Producto no encontrado");
+                });
+
+            log.info("Producto actualizado en la relación: {} → {}", 
+                currentProduct.getId(), newProduct.getId());
+        }
+
+        
+        InventoryModel newInventory = currentInventory;
+        if (request.getInventoryId() != null && 
+            !request.getInventoryId().equals(currentInventory.getId())) {
+
+            newInventory = inventoryRepository.findById(request.getInventoryId())
+                .orElseThrow(() -> {
+                    log.error("Inventario no encontrado: {}", request.getInventoryId());
+                    return new ResourceNotFoundException("Inventario no encontrado");
+                });
+
+            log.info("Inventario actualizado en la relación: {} → {}", 
+                currentInventory.getId(), newInventory.getId());
+        }
+
+        
+        try {
+            // Reglas de negocio entre tipo–unidad–cantidad
+            validationService.validateTypeAndUnitConsistency(
+                newInventory.getType(),
+                request.getUnitOfMeasure(),
+                request.getQuantity()
+            );
+
+            // Reglas de compatibilidad de unidades (receta vs inventario)
+            ProductInventoryModel tempModel = ProductInventoryModel.builder()
+                .unitOfMeasure(request.getUnitOfMeasure())
+                .inventory(newInventory)
+                .product(newProduct)
+                .build();
+
+            validationService.validateUnitCompatibility(tempModel, newInventory);
+
+            // Validar cambios específicos de unidad (si se cambió)
+            if (!oldUnit.equals(request.getUnitOfMeasure())) {
+                validationService.validateUnitChange(
+                    newInventory.getType(),
+                    oldUnit,
+                    request.getUnitOfMeasure(),
+                    request.getQuantity()
+                );
+            }
+
+        } catch (IllegalArgumentException e) {
+            log.error("Validación de actualización fallida: {}", e.getMessage());
+            throw e;
+        }
+
+         existing.setQuantity(request.getQuantity());
+         existing.setUnitOfMeasure(request.getUnitOfMeasure());
+         existing.setProduct(newProduct);
+         existing.setInventory(newInventory);
+      
         // Guardar la relación actualizada
         ProductInventoryModel updated = productInventoryRepository.save(existing);
         log.info("Relación actualizada: {}", id);
@@ -146,27 +231,60 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
     public boolean canSellProduct(Long productId, BigDecimal quantityToSell) {
         log.info("Verificando si se puede vender {} unidades del producto {}", quantityToSell, productId);
         
-        // Obtener receta del producto
-        List<ProductInventoryModel> recipe = productInventoryRepository.findByProductId(productId);
-        
-        if (recipe.isEmpty()) {
-            log.warn("Producto {} no tiene receta registrada", productId);
-            return false;
-        }
-        
-        // Verificar que cada ingrediente tenga suficiente stock
-        for (ProductInventoryModel ingredient : recipe) {
-            BigDecimal requiredQuantity = ingredient.getQuantity().multiply(quantityToSell);
+        try {
+            validationService.validateQuantity(quantityToSell);
             
-            if (!inventoryService.hasEnoughStock(ingredient.getInventory().getId(), requiredQuantity)) {
-                log.warn("Stock insuficiente de {} para vender {} unidades del producto {}", 
-                    ingredient.getInventory().getName(), quantityToSell, productId);
+            // Obtener receta
+            List<ProductInventoryModel> recipe = productInventoryRepository.findByProductId(productId);
+            
+            if (recipe.isEmpty()) {
+                log.warn("Producto {} sin receta", productId);
                 return false;
             }
+            
+            log.debug("Receta tiene {} ingredientes", recipe.size());
+            
+            //verificar stock de cada ingrediente
+            for (ProductInventoryModel ingredient : recipe) {
+                InventoryModel inventory = ingredient.getInventory();
+                
+                log.debug("Verificando ingrediente: {} (unidad receta: {}, unidad inventario: {})", 
+                    inventory.getName(), 
+                    ingredient.getUnitOfMeasure().getSymbol(),
+                    inventory.getUnitOfMeasure().getSymbol()
+                );
+
+                // Calcular cantidad total a deducir
+                BigDecimal totalDeduction = conversionService.calculateTotalDeductionQuantity(
+                    ingredient.getQuantity(),
+                    quantityToSell,
+                    ingredient.getUnitOfMeasure(),
+                    inventory
+                );
+                
+                log.debug("Ingrediente '{}': necesita {} {}", 
+                    inventory.getName(), totalDeduction, inventory.getUnitOfMeasure().getSymbol());
+                
+                // Verificar si hay suficiente stock
+                if (inventory.getQuantity().compareTo(totalDeduction) < 0) {
+                    log.error(
+                        "Stock insuficiente de '{}': Disponible {} {}, Necesita {} {}",
+                        inventory.getName(),
+                        inventory.getQuantity(), inventory.getUnitOfMeasure().getSymbol(),
+                        totalDeduction, inventory.getUnitOfMeasure().getSymbol()
+                    );
+                    return false;
+                }
+            }
+            
+            log.info("Stock suficiente para vender {} unidades del producto {}", 
+                quantityToSell, productId);
+            return true;
+            
+        } catch (Exception e) {
+            log.error("Error al verificar disponibilidad: {}", e.getMessage());
+            return false;
         }
-        
-        log.debug("Stock disponible para vender producto {}", productId);
-        return true;
     }
     
     @Override                               
@@ -187,7 +305,7 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
         
         if (!productInventoryRepository.existsById(id)) {
             log.error("Relación no encontrada: {}", id);
-            throw new NotFoundException("Relación no encontrada");
+            throw new ResourceNotFoundException("Relación no encontrada");
         }
         
         productInventoryRepository.deleteById(id);

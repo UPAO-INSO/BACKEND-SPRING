@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 
 import java.math.BigDecimal;
 
@@ -12,7 +13,7 @@ import java.math.BigDecimal;
 public class ProductInventoryResponseDto {
     private Long id;
     private BigDecimal quantity;
-    private String unitOfMeasure;
+    private UnitOfMeasure unitOfMeasure;
     
     // Datos del producto
     private Long productId;

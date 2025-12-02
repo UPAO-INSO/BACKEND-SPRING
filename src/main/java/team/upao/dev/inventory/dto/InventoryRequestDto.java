@@ -1,6 +1,7 @@
 package team.upao.dev.inventory.dto;
 
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +27,6 @@ public class InventoryRequestDto {
     @NotNull(message = "El tipo es requerido")
     private InventoryType type;  // Tipo: 'BEVERAGE', 'INGREDIENT', 'DISPOSABLE'
 
-    @NotBlank(message = "La unidad de medida es requerida")
-    private String unitOfMeasure;  // Unidad de medida (kg, litro, unidades de botella)
+    @NotNull(message = "La unidad de medida es requerida")
+    private UnitOfMeasure unitOfMeasure;
 }

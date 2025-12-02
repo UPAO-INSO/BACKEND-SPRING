@@ -49,6 +49,7 @@ public class SecurityConfig {
                                 .requestMatchers("/swagger-ui/**").permitAll()
                                 .requestMatchers("/docs/swagger-config").permitAll()
                                 .requestMatchers("/docs/**").permitAll()
+                                .requestMatchers("/payments/culqi/webhook").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception ->

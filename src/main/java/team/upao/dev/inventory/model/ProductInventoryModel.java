@@ -1,4 +1,5 @@
 package team.upao.dev.inventory.model;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.products.model.ProductModel;
 import java.math.BigDecimal;
 
@@ -22,8 +23,9 @@ public class ProductInventoryModel {
     @Column(nullable = false)
     private BigDecimal quantity;  // Cantidad del ingrediente usado en la receta (ej. 0.5 kg de harina)
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String unitOfMeasure;  // Unidad de medida del ingrediente (ej. kg, litro, unidad)
+    private UnitOfMeasure unitOfMeasure;  // Unidad de medida del ingrediente (ej. kg, litro, unidad)
     
     @ManyToOne
     @JoinColumn(name = "product_id", referencedColumnName = "id", nullable = false)

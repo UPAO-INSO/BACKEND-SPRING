@@ -9,16 +9,20 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.inventory.dto.InventoryRequestDto;
 import team.upao.dev.inventory.dto.InventoryResponseDto;
 import team.upao.dev.inventory.dto.InventoryFilterDto;
 import team.upao.dev.inventory.dto.InventoryUpdateDto;
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.inventory.mapper.InventoryMapper;
 import team.upao.dev.inventory.model.InventoryModel;
 import team.upao.dev.inventory.repository.IInventoryRepository;
 import team.upao.dev.inventory.service.InventoryService;
+import team.upao.dev.inventory.service.InventoryValidationService;
+import team.upao.dev.inventory.service.InventoryConversionService;
+
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,19 +34,29 @@ public class InventoryServiceImpl implements InventoryService {
 
     private final IInventoryRepository inventoryRepository;
     private final InventoryMapper inventoryMapper;
+    private final InventoryValidationService validationService;
+    private final InventoryConversionService conversionService;
 
     @Override
     @Transactional
     public InventoryResponseDto create(InventoryRequestDto request) {
         log.info("Creando nuevo ítem de inventario: {}", request.getName());
         
-        // Validar duplicados
-        if (inventoryRepository.findByNameIgnoreCase(request.getName()).isPresent()) {
-            log.warn("Intento de crear ítem duplicado: {}", request.getName());
-            throw new IllegalArgumentException(
-                String.format("El ítem '%s' ya existe en inventario", request.getName())
-            );
-        }
+        //Validar cantidad
+        validationService.validateQuantity(request.getQuantity());
+        
+        //Validar unidad
+        validationService.validateUnit(request.getUnitOfMeasure());
+
+        validationService.validateTypeAndUnitConsistency(
+            request.getType(),
+            request.getUnitOfMeasure(),
+            request.getQuantity()
+        );
+        
+        //Validar nombre único
+        boolean nameExists = inventoryRepository.findByNameIgnoreCase(request.getName()).isPresent();
+        validationService.validateUniqueInventoryName(request.getName(), nameExists);
         
         InventoryModel model = inventoryMapper.toModel(request);
         InventoryModel saved = inventoryRepository.save(model);
@@ -58,7 +72,7 @@ public class InventoryServiceImpl implements InventoryService {
         InventoryModel model = inventoryRepository.findById(id)
             .orElseThrow(() -> {
                 log.error("Item no encontrado: {}", id);
-                return new NotFoundException(
+                return new ResourceNotFoundException(
                     String.format("Item con ID %d no encontrado", id)
                 );
             });
@@ -130,15 +144,6 @@ public class InventoryServiceImpl implements InventoryService {
         );
     }
 
-    /*
-        ¿QUÉ HACE?
-     * - Encuentra TODOS los ítems sin stock (cantidad = 0)
-     * - CRÍTICO: estos productos NO se pueden vender
-        Sistema valida si se puede vender un plato
-     * - Antes de vender, verifica que ingredientes no estén agotados
-     * - Si hay agotados: rechaza la orden con mensaje "Harina agotada"
-     * - Este método se usa internamente también
-    */
     @Override
     @Transactional(readOnly = true)
     public PaginationResponseDto<InventoryResponseDto> findOutOfStockItems(PaginationRequestDto requestDto) {
@@ -214,19 +219,57 @@ public class InventoryServiceImpl implements InventoryService {
         log.info("Actualizando inventario con ID: {}", id);
         
         InventoryModel existing = this.findModelById(id);
+
+        InventoryType oldType = existing.getType();
+        UnitOfMeasure oldUnit = existing.getUnitOfMeasure();
         
         // Solo actualizar si el campo tiene un valor no nulo
         if (request.getName() != null) {
             existing.setName(request.getName());
         }
         if (request.getQuantity() != null) {
+            validationService.validateQuantity(request.getQuantity());
             existing.setQuantity(request.getQuantity());
+            log.debug("Cantidad actualizada: {}", request.getQuantity());
         }
         if (request.getType() != null) {
             existing.setType(request.getType());
         }
         if (request.getUnitOfMeasure() != null) {
+            validationService.validateUnit(request.getUnitOfMeasure());
             existing.setUnitOfMeasure(request.getUnitOfMeasure());
+            log.debug("Unidad actualizada: {}", request.getUnitOfMeasure().getSymbol());
+        }
+
+        try {
+            // Validar coherencia general
+            validationService.validateTypeAndUnitConsistency(
+                existing.getType(),
+                existing.getUnitOfMeasure(),
+                existing.getQuantity()
+            );
+            
+            // Validar cambios específicos si hubo modificaciones
+            if (!oldType.equals(existing.getType())) {
+                validationService.validateTypeChange(
+                    oldType, 
+                    existing.getType(), 
+                    existing.getUnitOfMeasure(), 
+                    existing.getQuantity()
+                );
+            }
+            
+            if (!oldUnit.equals(existing.getUnitOfMeasure())) {
+                validationService.validateUnitChange(
+                    existing.getType(), 
+                    oldUnit, 
+                    existing.getUnitOfMeasure(), 
+                    existing.getQuantity()
+                );
+            }
+        } catch (IllegalArgumentException e) {
+            log.error(" Validación de actualización fallida: {}", e.getMessage());
+            throw e;
         }
         
         InventoryModel updated = inventoryRepository.save(existing);
@@ -237,48 +280,82 @@ public class InventoryServiceImpl implements InventoryService {
 
     @Override
     @Transactional
-    public void deductStock(Long inventoryId, BigDecimal quantity) {
+    public void deductStock(Long inventoryId, BigDecimal quantity, UnitOfMeasure unit) {
         log.info("Deduciendo {} unidades del inventario ID: {}", quantity, inventoryId);
         
+        validationService.validateQuantity(quantity);
+        validationService.validateUnit(unit);
+
         InventoryModel inventory = findModelById(inventoryId);
         
-        //  Validar suficiente stock
-        if (inventory.getQuantity().compareTo(quantity) < 0) {
-            log.error(" Stock insuficiente - ID: {}, requerido: {}, disponible: {}", 
-                inventoryId, quantity, inventory.getQuantity());
+        log.debug("Inventario actual: {} {} {}", 
+            inventory.getQuantity(), inventory.getUnitOfMeasure().getSymbol(), inventory.getName());
+
+        if (!unit.isCompatible(inventory.getUnitOfMeasure())) {
+            log.error("Unidades incompatibles: {} vs {}", 
+                unit.getSymbol(), inventory.getUnitOfMeasure().getSymbol());
             throw new IllegalArgumentException(
-                String.format("Stock insuficiente de '%s'. Disponible: %s, Requerido: %s", 
-                    inventory.getName(), inventory.getQuantity(), quantity)
+                String.format(
+                    "Unidad incompatible. Se intenta descontar en %s pero el inventario usa %s",
+                    unit.getSymbol(), inventory.getUnitOfMeasure().getSymbol()
+                )
             );
         }
+
+        BigDecimal quantityInInventoryUnit = conversionService.convert(quantity, unit, inventory.getUnitOfMeasure());
+
+        log.debug("Cantidad convertida: {} {} = {} {}", 
+            quantity, unit.getSymbol(),
+            quantityInInventoryUnit, inventory.getUnitOfMeasure().getSymbol());
         
-        // Restar cantidad
-        BigDecimal newQuantity = inventory.getQuantity().subtract(quantity);
+        //Validar stock suficiente
+        validationService.validateSufficientStock(inventory, quantity, unit);
+        
+        // ✅ Restar cantidad
+        BigDecimal newQuantity = inventory.getQuantity().subtract(quantityInInventoryUnit);
         inventory.setQuantity(newQuantity);
         inventoryRepository.save(inventory);
         
-        log.info(" Stock deducido - ID: {}, Nuevo stock: {}", inventoryId, newQuantity);
+        log.info("Stock deducido: {} → Stock restante: {} {}", 
+            inventory.getName(), newQuantity, inventory.getUnitOfMeasure().getSymbol());
     }
 
     @Override
     @Transactional(readOnly = true)
-    public boolean hasEnoughStock(Long inventoryId, BigDecimal quantity) {
+    public boolean hasEnoughStock(Long inventoryId, BigDecimal quantity, UnitOfMeasure unit) {
         log.debug("Verificando stock - ID: {}, requerido: {}", inventoryId, quantity);
         
-        InventoryModel inventory = this.findModelById(inventoryId);
-        boolean hasStock = inventory.getQuantity().compareTo(quantity) >= 0;
-        
-        log.debug("Resultado: {} - Stock disponible: {}", 
-            hasStock ? "Suficiente" : "Insuficiente", 
-            inventory.getQuantity());
-        return hasStock;
+        try {
+            validationService.validateQuantity(quantity);
+            validationService.validateUnit(unit);
+            
+            InventoryModel inventory = findModelById(inventoryId);
+            
+            if (!unit.isCompatible(inventory.getUnitOfMeasure())) {
+                log.warn("nidades incompatibles - asumiendo sin stock");
+                return false;
+            }
+            
+            BigDecimal quantityInInventoryUnit = conversionService.convert(quantity, unit, inventory.getUnitOfMeasure());
+            
+            boolean hasStock = inventory.getQuantity().compareTo(quantityInInventoryUnit) >= 0;
+            
+            log.debug("✅ Verificación: {} → Stock: {} {}", 
+                hasStock ? "Suficiente" : "Insuficiente",
+                inventory.getQuantity(), inventory.getUnitOfMeasure().getSymbol());
+            
+            return hasStock;
+        } catch (Exception e) {
+            log.error("Error al verificar stock: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public InventoryModel findModelById(Long id) {
         return inventoryRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException(
+            .orElseThrow(() -> new ResourceNotFoundException(
                 String.format("Inventario con ID %d no encontrado", id)
             ));
     }
@@ -290,7 +367,7 @@ public class InventoryServiceImpl implements InventoryService {
         
         if (!inventoryRepository.existsById(id)) {
             log.error("Inventario no encontrado para eliminar: {}", id);
-            throw new NotFoundException(
+            throw new ResourceNotFoundException(
                 String.format("Inventario con ID %d no encontrado", id)
             );
         }

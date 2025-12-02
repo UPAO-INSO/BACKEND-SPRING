@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
+import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
 import team.upao.dev.inventory.service.ProductInventoryService;
 import java.util.List;
 
@@ -65,7 +66,7 @@ public class ProductInventoryController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<ProductInventoryResponseDto> update(@PathVariable Long id,
-                                                                @Valid @RequestBody ProductInventoryRequestDto request) {
+                                                                @Valid @RequestBody ProductInventoryUpdateDto request) {
         return ResponseEntity.ok(productInventoryService.updateProductInventory(id, request));
     }
 

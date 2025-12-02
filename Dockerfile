@@ -18,6 +18,6 @@ WORKDIR /app
 
 COPY --from=build /app/target/*.jar /app/punto_de_sal.jar
 
-EXPOSE 3000
+EXPOSE 8080
 
 ENTRYPOINT ["java", "-XX:-UseContainerSupport", "-jar", "/app/punto_de_sal.jar"]

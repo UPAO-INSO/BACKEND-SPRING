@@ -1,9 +1,7 @@
 package team.upao.dev.orders.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
 
@@ -11,6 +9,8 @@ import java.util.List;
 
 @Getter @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderRequestDto {
     private OrderStatus orderStatus;
 
@@ -19,11 +19,9 @@ public class OrderRequestDto {
     @NotNull
     private Long tableId;
 
-    private Boolean paid;
-
     @NotNull
     private List<ProductOrderRequestDto> productOrders;
 
     @NotNull
-    private List<OrderEmployeeDto> orderEmployees;
+    private List<OrderEmployeeRequestDto> orderEmployees;
 }

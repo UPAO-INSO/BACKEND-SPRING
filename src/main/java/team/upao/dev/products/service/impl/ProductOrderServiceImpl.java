@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.products.dto.ProductOrderRequestDto;
 import team.upao.dev.products.dto.ProductOrderResponseDto;
 import team.upao.dev.products.mapper.ProductOrderMapper;
@@ -55,16 +56,21 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Override
     public ProductOrderResponseDto findById(Long id) {
-        return null;
+        ProductOrderModel productOrderModel = this.findModelById(id);
+
+        return productOrderMapper.toDto(productOrderModel);
     }
 
     @Override
     public ProductOrderModel findModelById(Long id) {
-        return null;
+        return this.productOrderRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product Order with id: " + id));
     }
 
     @Override
     public String delete(Long id) {
-        return "";
+        this.findById(id);
+        return String.format("Delete Product Order with id: %s", id);
     }
 }

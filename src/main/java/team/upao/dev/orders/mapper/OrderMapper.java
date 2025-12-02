@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import team.upao.dev.orders.dto.OrderRequestDto;
 import team.upao.dev.orders.dto.OrderResponseDto;
-import team.upao.dev.orders.dto.OrderEmployeeDto;
+import team.upao.dev.orders.dto.OrderEmployeeResponseDto;
 import team.upao.dev.orders.model.OrderModel;
 import team.upao.dev.products.dto.ProductOrderResponseDto;
 import team.upao.dev.products.mapper.ProductOrderMapper;
@@ -20,7 +20,7 @@ public class OrderMapper {
     public OrderModel toModel(OrderRequestDto orderResponseDto) {
         return OrderModel.builder()
                 .comment(orderResponseDto.getComment())
-                .paid(orderResponseDto.getPaid())
+                .paid(false)
                 .table(null)
                 .productOrders(null)
                 .ordersEmployee(null)
@@ -29,7 +29,7 @@ public class OrderMapper {
 
     public OrderResponseDto toDto(OrderModel order) {
         List<ProductOrderResponseDto> productOrders = productOrderMapper.toDto(order.getProductOrders());
-        List<OrderEmployeeDto> orderEmployees = orderEmployeeMapper.toDto(order.getOrdersEmployee());
+        List<OrderEmployeeResponseDto> orderEmployees = orderEmployeeMapper.toDto(order.getOrdersEmployee());
 
         return OrderResponseDto.builder()
                 .id(order.getId())

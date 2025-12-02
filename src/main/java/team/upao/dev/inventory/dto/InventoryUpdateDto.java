@@ -1,6 +1,7 @@
 package team.upao.dev.inventory.dto;
 
 import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,5 +20,5 @@ public class InventoryUpdateDto {
 
     private InventoryType type;  // Tipo: 'BEVERAGE', 'INGREDIENT', 'DISPOSABLE'
 
-    private String unitOfMeasure;  // Unidad de medida (kg, litro, unidades de botella)
+    private UnitOfMeasure unitOfMeasure;  // Unidad de medida (kg, litro, unidades de botella)
 }

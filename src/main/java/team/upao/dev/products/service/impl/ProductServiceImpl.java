@@ -9,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.DuplicateResourceException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.products.dto.ProductRequestDto;
 import team.upao.dev.products.dto.ProductResponseDto;
 import team.upao.dev.products.mapper.ProductMapper;
@@ -34,7 +35,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductModel> products = productRepository.findAllById(ids);
 
         if (products.isEmpty()) {
-            throw new NotFoundException("No products found with the provided IDs.");
+            throw new ResourceNotFoundException("No products found with the provided IDs.");
         }
 
         return productMapper.toDto(products)
@@ -83,7 +84,7 @@ public class ProductServiceImpl implements ProductService {
         ProductModel product = productRepository
                 .findByNameIgnoreCase(name).stream().filter(p -> p.getActive() == true)
                 .findFirst()
-                .orElseThrow(() -> new NotFoundException("Product not found with name: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with name: " + name));
 
         return productMapper.toDto(product);
     }
@@ -92,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductResponseDto> findByNameContaining(String name) {
         List<ProductModel> products = productRepository
                 .findByNameContainingIgnoreCase(name)
-                .orElseThrow(() -> new NotFoundException("No products found containing name: " + name));
+                .orElseThrow(() -> new ResourceNotFoundException("No products found containing name: " + name));
 
         return productMapper.toDto(products)
                 .stream()
@@ -104,7 +105,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductResponseDto findById(Long id) {
         ProductModel product = productRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
 
         return productMapper.toDto(product);
     }
@@ -113,7 +114,7 @@ public class ProductServiceImpl implements ProductService {
     public ProductModel findModelById(Long id) {
         return productRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Product not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 
     @Override
@@ -125,7 +126,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponseDto create(ProductRequestDto product) {
         if (productRepository.existsByName(product.getName()))
-            throw new IllegalArgumentException("Product with name: " + product.getName() + " already exists");
+            throw new DuplicateResourceException("Product with name: " + product.getName() + " already exists");
 
         ProductModel productModel = productMapper.toModel(product);
         ProductTypeModel productType = productTypeService.findModelById(product.getProductTypeId());
@@ -194,7 +195,7 @@ public class ProductServiceImpl implements ProductService {
         this.findById(id);
 
         if (existsByName(name)) {
-            throw new IllegalArgumentException("Product with name: " + name + " already exists");
+            throw new DuplicateResourceException("Product with name: " + name + " already exists");
         }
 
         this.productRepository.updateNameById(id, name);

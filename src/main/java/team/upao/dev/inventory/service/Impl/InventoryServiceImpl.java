@@ -1,31 +1,31 @@
 package team.upao.dev.inventory.service.Impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.exceptions.ResourceNotFoundException;
+import team.upao.dev.inventory.dto.InventoryFilterDto;
 import team.upao.dev.inventory.dto.InventoryRequestDto;
 import team.upao.dev.inventory.dto.InventoryResponseDto;
-import team.upao.dev.inventory.dto.InventoryFilterDto;
 import team.upao.dev.inventory.dto.InventoryUpdateDto;
 import team.upao.dev.inventory.enums.InventoryType;
 import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.inventory.mapper.InventoryMapper;
 import team.upao.dev.inventory.model.InventoryModel;
 import team.upao.dev.inventory.repository.IInventoryRepository;
+import team.upao.dev.inventory.service.InventoryConversionService;
 import team.upao.dev.inventory.service.InventoryService;
 import team.upao.dev.inventory.service.InventoryValidationService;
-import team.upao.dev.inventory.service.InventoryConversionService;
-
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -317,6 +317,45 @@ public class InventoryServiceImpl implements InventoryService {
         inventoryRepository.save(inventory);
         
         log.info("Stock deducido: {} → Stock restante: {} {}", 
+            inventory.getName(), newQuantity, inventory.getUnitOfMeasure().getSymbol());
+    }
+
+    @Override
+    @Transactional
+    public void restoreStock(Long inventoryId, BigDecimal quantity, UnitOfMeasure unit) {
+        log.info("Restaurando {} {} al inventario ID: {}", quantity, unit.getSymbol(), inventoryId);
+        
+        validationService.validateQuantity(quantity);
+        validationService.validateUnit(unit);
+
+        InventoryModel inventory = findModelById(inventoryId);
+        
+        log.debug("Inventario actual antes de restaurar: {} {} {}", 
+            inventory.getQuantity(), inventory.getUnitOfMeasure().getSymbol(), inventory.getName());
+
+        if (!unit.isCompatible(inventory.getUnitOfMeasure())) {
+            log.error("Unidades incompatibles para restaurar: {} vs {}", 
+                unit.getSymbol(), inventory.getUnitOfMeasure().getSymbol());
+            throw new IllegalArgumentException(
+                String.format(
+                    "Unidad incompatible. Se intenta restaurar en %s pero el inventario usa %s",
+                    unit.getSymbol(), inventory.getUnitOfMeasure().getSymbol()
+                )
+            );
+        }
+
+        BigDecimal quantityInInventoryUnit = conversionService.convert(quantity, unit, inventory.getUnitOfMeasure());
+
+        log.debug("Cantidad a restaurar convertida: {} {} = {} {}", 
+            quantity, unit.getSymbol(),
+            quantityInInventoryUnit, inventory.getUnitOfMeasure().getSymbol());
+        
+        // Sumar cantidad (restaurar)
+        BigDecimal newQuantity = inventory.getQuantity().add(quantityInInventoryUnit);
+        inventory.setQuantity(newQuantity);
+        inventoryRepository.save(inventory);
+        
+        log.info("Stock restaurado: {} → Stock actual: {} {}", 
             inventory.getName(), newQuantity, inventory.getUnitOfMeasure().getSymbol());
     }
 

@@ -21,7 +21,12 @@ import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
 import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
+import team.upao.dev.inventory.dto.InventoryRequestDto;
+import team.upao.dev.inventory.dto.InventoryResponseDto;
+import team.upao.dev.inventory.enums.InventoryType;
+import team.upao.dev.inventory.enums.UnitOfMeasure;
 import team.upao.dev.inventory.service.ProductInventoryService;
+import team.upao.dev.inventory.service.InventoryService;
 import team.upao.dev.products.dto.ProductRequestDto;
 import team.upao.dev.products.dto.ProductResponseDto;
 import team.upao.dev.products.dto.RecipeItemDto;
@@ -40,6 +45,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductTypeService productTypeService;
     private final ProductMapper productMapper;
     private final ProductInventoryService productInventoryService;
+    private final InventoryService inventoryService;
 
     @Override
     public List<ProductResponseDto> findByIds(List<Long> ids) {
@@ -146,7 +152,41 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(productModel);
 
-        if (product.getRecipe() != null && !product.getRecipe().isEmpty()) {
+        String productTypeName = productType.getName().toUpperCase();
+        
+        // Si es BEBIDAS o DESCARTABLES, crear registro en inventario y relación automática
+        if (productTypeName.equals("BEBIDAS") || productTypeName.equals("DESCARTABLES")) {
+            log.info("Creating inventory entry for {} product: {}", productTypeName, product.getName());
+            
+            // Determinar el tipo de inventario según el tipo de producto
+            InventoryType inventoryType = productTypeName.equals("BEBIDAS") 
+                    ? InventoryType.BEVERAGE 
+                    : InventoryType.DISPOSABLE;
+            
+            // Crear el item en inventario con la cantidad inicial
+            InventoryRequestDto inventoryRequest = InventoryRequestDto.builder()
+                    .name(product.getName())
+                    .quantity(product.getInitialQuantity() != null ? product.getInitialQuantity() : java.math.BigDecimal.ONE)
+                    .type(inventoryType)
+                    .unitOfMeasure(UnitOfMeasure.UNIDAD) // Bebidas y descartables siempre en UNIDAD
+                    .build();
+            
+            InventoryResponseDto inventoryCreated = inventoryService.create(inventoryRequest);
+            log.info("Inventory item created with ID: {}", inventoryCreated.getId());
+            
+            // Crear la relación producto-inventario con cantidad 1 (se descuenta 1 por cada venta)
+            ProductInventoryRequestDto relationRequest = ProductInventoryRequestDto.builder()
+                    .productId(productModel.getId())
+                    .inventoryId(inventoryCreated.getId())
+                    .quantity(java.math.BigDecimal.ONE)
+                    .unitOfMeasure(UnitOfMeasure.UNIDAD)
+                    .build();
+            
+            productInventoryService.createProductInventory(relationRequest);
+            log.info("Product-Inventory relation created for product: {}", productModel.getId());
+            
+        } else if (product.getRecipe() != null && !product.getRecipe().isEmpty()) {
+            // Para platos (ENTRADAS, SEGUNDOS, CARTA), crear receta con ingredientes
             for (RecipeItemDto item : product.getRecipe()) {
                 ProductInventoryRequestDto inventoryRequest = ProductInventoryRequestDto.builder()
                         .productId(productModel.getId())
@@ -165,17 +205,106 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponseDto update(Long id, ProductRequestDto product) {
         ProductModel productExisting = findModelById(id);
+        
+        // Detectar cambio de categoría
+        Long oldTypeId = productExisting.getProductType().getId();
+        Long newTypeId = product.getProductTypeId();
+        boolean categoryChanged = newTypeId != null && !newTypeId.equals(oldTypeId);
+        
+        // Obtener nombres de categorías para determinar el tipo de cambio
+        String oldTypeName = productExisting.getProductType().getName().toUpperCase();
+        boolean wasPlato = oldTypeName.equals("ENTRADAS") || oldTypeName.equals("SEGUNDOS") || oldTypeName.equals("CARTA");
+        boolean wasBeverageOrDisposable = oldTypeName.equals("BEBIDAS") || oldTypeName.equals("DESCARTABLES");
+        
+        String newTypeName = "";
+        boolean willBePlato = false;
+        boolean willBeBeverageOrDisposable = false;
+        
+        if (newTypeId != null) {
+            ProductTypeModel newType = productTypeService.findModelById(newTypeId);
+            newTypeName = newType.getName().toUpperCase();
+            willBePlato = newTypeName.equals("ENTRADAS") || newTypeName.equals("SEGUNDOS") || newTypeName.equals("CARTA");
+            willBeBeverageOrDisposable = newTypeName.equals("BEBIDAS") || newTypeName.equals("DESCARTABLES");
+        }
 
         productExisting.setName(product.getName());
         productExisting.setDescription(product.getDescription());
         productExisting.setPrice(product.getPrice());
         productExisting.setAvailable(product.getAvailable() != null ? product.getAvailable() : true);
         productExisting.setActive(product.getActive() != null ? product.getActive() : true);
+        
+        // Actualizar tipo de producto si cambió
+        if (categoryChanged) {
+            ProductTypeModel newProductType = productTypeService.findModelById(newTypeId);
+            productExisting.setProductType(newProductType);
+            log.info("Category changed from {} to {} for product {}", oldTypeName, newTypeName, id);
+        }
 
         productRepository.save(productExisting);
+        
+        // Manejar cambio de categoría
+        if (categoryChanged) {
+            List<ProductInventoryResponseDto> existingRecipeList = productInventoryService.getRecipeByProductId(id);
+            
+            if (wasBeverageOrDisposable && willBePlato) {
+                // De bebida/descartable a plato: eliminar inventario asociado
+                log.info("Changing from beverage/disposable to dish - removing inventory association");
+                for (ProductInventoryResponseDto existing : existingRecipeList) {
+                    productInventoryService.deleteProductInventory(existing.getId());
+                    // También eliminar el inventory si tiene el mismo nombre del producto
+                    if (existing.getInventoryName() != null && 
+                        existing.getInventoryName().equalsIgnoreCase(productExisting.getName())) {
+                        try {
+                            inventoryService.delete(existing.getInventoryId());
+                            log.info("Deleted inventory {} for product {}", existing.getInventoryId(), id);
+                        } catch (Exception e) {
+                            log.warn("Could not delete inventory {}: {}", existing.getInventoryId(), e.getMessage());
+                        }
+                    }
+                }
+            } else if (wasPlato && willBeBeverageOrDisposable) {
+                // De plato a bebida/descartable: eliminar receta y crear inventario
+                log.info("Changing from dish to beverage/disposable - removing recipe and creating inventory");
+                for (ProductInventoryResponseDto existing : existingRecipeList) {
+                    productInventoryService.deleteProductInventory(existing.getId());
+                }
+                
+                // Crear nuevo inventory para el producto
+                InventoryType invType = newTypeName.equals("BEBIDAS") ? InventoryType.BEVERAGE : InventoryType.DISPOSABLE;
+                InventoryRequestDto inventoryRequest = InventoryRequestDto.builder()
+                        .name(productExisting.getName())
+                        .quantity(product.getInitialQuantity() != null ? product.getInitialQuantity() : java.math.BigDecimal.ZERO)
+                        .type(invType)
+                        .unitOfMeasure(UnitOfMeasure.UNIDAD)
+                        .build();
+                InventoryResponseDto createdInventory = inventoryService.create(inventoryRequest);
+                
+                // Crear relación product_inventory
+                ProductInventoryRequestDto piRequest = ProductInventoryRequestDto.builder()
+                        .productId(id)
+                        .inventoryId(createdInventory.getId())
+                        .quantity(java.math.BigDecimal.ONE)
+                        .unitOfMeasure(UnitOfMeasure.UNIDAD)
+                        .build();
+                productInventoryService.createProductInventory(piRequest);
+                log.info("Created inventory {} and product_inventory for product {}", createdInventory.getId(), id);
+                
+                return productMapper.toDto(productExisting);
+            } else if (wasBeverageOrDisposable && willBeBeverageOrDisposable) {
+                // De bebida a descartable o viceversa: actualizar tipo en inventory
+                log.info("Changing between beverage/disposable - updating inventory type");
+                for (ProductInventoryResponseDto existing : existingRecipeList) {
+                    InventoryType newInvType = newTypeName.equals("BEBIDAS") ? InventoryType.BEVERAGE : InventoryType.DISPOSABLE;
+                    inventoryService.update(existing.getInventoryId(), 
+                        team.upao.dev.inventory.dto.InventoryUpdateDto.builder()
+                            .type(newInvType)
+                            .build());
+                }
+            }
+        }
 
-        // Update Recipe
-        if (product.getRecipe() != null) {
+        // Update Recipe (solo para platos)
+        if (product.getRecipe() != null && !willBeBeverageOrDisposable) {
             log.info("Updating recipe for product {}. New recipe size: {}", id, product.getRecipe().size());
             
             List<ProductInventoryResponseDto> existingRecipeList = productInventoryService.getRecipeByProductId(id);

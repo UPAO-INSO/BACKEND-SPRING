@@ -13,6 +13,7 @@ import java.util.UUID;
 public interface PaymentService {
     PaymentResponseDto create(PaymentRequestDto paymentResponseDto);
     PaymentResponseDto findById(Long id);
+    PaymentModel findModelById(Long id);
     PaymentModel findModelByOrderIdInPayment(UUID orderId);
     PaginationResponseDto<PaymentResponseDto> findAll(PaginationRequestDto paginationRequestDto, String status, PaymentType paymentType);
     PaymentResponseDto update(Long id, PaymentRequestDto paymentResponseDto);

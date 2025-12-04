@@ -24,6 +24,8 @@ import team.upao.dev.payments.model.PaymentModel;
 import team.upao.dev.payments.repository.IPaymentRepository;
 import team.upao.dev.payments.service.PaymentService;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
@@ -49,15 +51,42 @@ public class PaymentServiceImpl implements PaymentService {
         paymentModel.setOrder(orderModel);
         paymentModel.setCustomer(customerModel);
 
+        Integer incomingAmount = paymentRequestDto.getAmount();
+
+        String provider = paymentRequestDto.getProvider();
+        if (provider != null && provider.equalsIgnoreCase("culqi")) {
+            paymentModel.setAmount(incomingAmount);
+        } else {
+            BigDecimal amountBd = BigDecimal.valueOf(incomingAmount);
+            BigDecimal amountInCentsBd = amountBd.multiply(BigDecimal.valueOf(100));
+            BigDecimal taxCentsBd = amountInCentsBd.multiply(new BigDecimal("0.18"));
+
+            int amountInCents = amountInCentsBd.setScale(0, RoundingMode.HALF_UP).intValueExact();
+            int taxCents = taxCentsBd.setScale(0, RoundingMode.HALF_UP).intValueExact();
+
+            log.info("Payment.create - incomingAmount (soles) = {}, amountInCents = {}, taxCents = {}",
+                    incomingAmount, amountInCents, taxCents);
+
+            paymentModel.setAmount(amountInCents);
+        }
+
         PaymentModel savedPayment = paymentRepository.save(paymentModel);
         return paymentMapper.toDto(savedPayment);
     }
+
+
 
     @Override
     public PaymentResponseDto findById(Long id) {
         PaymentModel paymentModel = paymentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
         return paymentMapper.toDto(paymentModel);
+    }
+
+    @Override
+    public PaymentModel findModelById(Long id) {
+        return paymentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found with id: " + id));
     }
 
     @Override
@@ -89,6 +118,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .totalElements(entities.getTotalElements())
                 .page(entities.getNumber() + 1)
                 .size(entities.getSize())
+                .empty(entities.isEmpty())
                 .build();
     }
 

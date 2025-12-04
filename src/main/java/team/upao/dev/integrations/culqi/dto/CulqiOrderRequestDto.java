@@ -5,6 +5,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import team.upao.dev.payments.dto.PaymentRequestDto;
 
 @Builder
 @Data
@@ -37,4 +38,6 @@ public class CulqiOrderRequestDto {
     @Valid
     @NotNull
     private ClientDetailsRequestDTO clientDetailsRequest;
+
+    private PaymentRequestDto.Metadata metadata;
 }

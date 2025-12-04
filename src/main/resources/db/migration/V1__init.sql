@@ -148,12 +148,9 @@ CREATE TABLE IF NOT EXISTS `orders`
     table_id     BIGINT       NULL,
     comment      VARCHAR(255) NULL,
     order_status VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
-    customer_id  BIGINT       NULL,
     PRIMARY KEY (id),
     KEY idx_orders_table_id (table_id),
-    KEY idx_orders_customer_id (customer_id),
-    CONSTRAINT fk_orders_table FOREIGN KEY (table_id) REFERENCES `tables` (id),
-    CONSTRAINT fk_orders_customers FOREIGN KEY (customer_id) REFERENCES customers (id)
+    CONSTRAINT fk_orders_table FOREIGN KEY (table_id) REFERENCES `tables` (id)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_unicode_ci;

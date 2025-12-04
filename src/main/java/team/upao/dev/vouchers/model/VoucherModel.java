@@ -2,18 +2,20 @@ package team.upao.dev.vouchers.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import team.upao.dev.orders.model.OrderModel;
+import org.hibernate.annotations.CreationTimestamp;
+import team.upao.dev.payments.model.PaymentModel;
 import team.upao.dev.vouchers.enums.CurrencyType;
-import team.upao.dev.vouchers.enums.VoucherStatus;
 import team.upao.dev.vouchers.enums.VoucherType;
 
 import java.time.Instant;
 
-@Getter @Setter
-@AllArgsConstructor @NoArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-//@Entity
-//@Table(name = "voucher")
+@Entity
+@Table(name = "vouchers")
 public class VoucherModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,24 +28,44 @@ public class VoucherModel {
     private String number;
 
     @Column(nullable = false)
-    private VoucherType type;
+    @Enumerated(EnumType.STRING)
+    private VoucherType voucherType;
 
+    @Column(nullable = false)
+    @CreationTimestamp
     private Instant issuedAt;
 
-    private CurrencyType currency;
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private CurrencyType currency = CurrencyType.PEN;
 
-    private Double igvPercentage;
+    @Builder.Default
+    private Double igvPercentage = 18.0;
 
-    private Double totalWithIgv;
+    @Column(nullable = false)
+    private Double totalGravada;
+
+    @Column(nullable = false)
+    private Double totalIgv;
+
+    @Column(nullable = false)
+    private Double total;
 
     private String observations;
 
     @Column(nullable = false)
-    private VoucherStatus status;
-
     private String pdfUrl;
 
+    @Column(nullable = false)
+    private String xmlUrl;
+
+    @Column(nullable = false)
+    private String qrCodeString;
+
+    @Column(nullable = false)
+    private String barCode;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JoinColumn(name = "order_id")
-    private OrderModel order;
+    @JoinColumn(name = "payment_id")
+    private PaymentModel paymentModel;
 }

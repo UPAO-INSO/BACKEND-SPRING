@@ -30,4 +30,6 @@ public class ProductRequestDto {
     private Boolean active;
 
     private Boolean available;
+
+    private java.util.List<RecipeItemDto> recipe;
 }

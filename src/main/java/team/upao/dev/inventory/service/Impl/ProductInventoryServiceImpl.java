@@ -1,10 +1,13 @@
 package team.upao.dev.inventory.service.Impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.math.BigDecimal;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
@@ -15,14 +18,11 @@ import team.upao.dev.inventory.model.InventoryModel;
 import team.upao.dev.inventory.model.ProductInventoryModel;
 import team.upao.dev.inventory.repository.IInventoryRepository;
 import team.upao.dev.inventory.repository.IProductInventoryRepository;
-import team.upao.dev.inventory.service.InventoryValidationService;
 import team.upao.dev.inventory.service.InventoryConversionService;
+import team.upao.dev.inventory.service.InventoryValidationService;
 import team.upao.dev.inventory.service.ProductInventoryService;
 import team.upao.dev.products.model.ProductModel;
 import team.upao.dev.products.repository.IProductRepository;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -238,8 +238,10 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
             List<ProductInventoryModel> recipe = productInventoryRepository.findByProductId(productId);
             
             if (recipe.isEmpty()) {
-                log.warn("Producto {} sin receta", productId);
-                return false;
+                // Si no tiene receta, se asume que se puede vender sin control de stock
+                // Esto aplica para productos que aún no tienen receta definida
+                log.warn("Producto {} sin receta - se permite venta sin validación de stock", productId);
+                return true;
             }
             
             log.debug("Receta tiene {} ingredientes", recipe.size());
@@ -292,6 +294,54 @@ public class ProductInventoryServiceImpl implements ProductInventoryService {
         log.info("Obteniendo ingredientes para deducir del producto {}", productId);
         List<ProductInventoryModel> models = productInventoryRepository.findIngredientsForDeduction(productId);
         return productInventoryMapper.toDto(models);                    
+    }
+
+    @Override
+    public String getStockErrorDetail(Long productId, BigDecimal quantityToSell) {
+        log.info("Verificando detalle de stock para {} unidades del producto {}", quantityToSell, productId);
+        
+        try {
+            validationService.validateQuantity(quantityToSell);
+            
+            List<ProductInventoryModel> recipe = productInventoryRepository.findByProductId(productId);
+            
+            if (recipe.isEmpty()) {
+                return null; // Sin receta, se permite
+            }
+            
+            StringBuilder errorDetails = new StringBuilder();
+            
+            for (ProductInventoryModel ingredient : recipe) {
+                InventoryModel inventory = ingredient.getInventory();
+                
+                BigDecimal totalDeduction = conversionService.calculateTotalDeductionQuantity(
+                    ingredient.getQuantity(),
+                    quantityToSell,
+                    ingredient.getUnitOfMeasure(),
+                    inventory
+                );
+                
+                if (inventory.getQuantity().compareTo(totalDeduction) < 0) {
+                    if (errorDetails.length() > 0) {
+                        errorDetails.append("; ");
+                    }
+                    errorDetails.append(String.format(
+                        "%s: disponible %.2f %s, necesita %.2f %s",
+                        inventory.getName(),
+                        inventory.getQuantity(),
+                        inventory.getUnitOfMeasure().getSymbol(),
+                        totalDeduction,
+                        inventory.getUnitOfMeasure().getSymbol()
+                    ));
+                }
+            }
+            
+            return errorDetails.length() > 0 ? errorDetails.toString() : null;
+            
+        } catch (Exception e) {
+            log.error("Error al verificar detalle de stock: {}", e.getMessage());
+            return "Error al verificar stock: " + e.getMessage();
+        }
     }
 
     

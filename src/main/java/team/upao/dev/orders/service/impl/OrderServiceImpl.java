@@ -129,25 +129,37 @@ public class OrderServiceImpl implements OrderService {
             productQuantities.merge(po.getProductId(), po.getQuantity(), Integer::sum);
         }
         
-        // Validar cada producto
+        // Validar cada producto y recolectar errores
+        StringBuilder allErrors = new StringBuilder();
+        
         for (Map.Entry<Long, Integer> entry : productQuantities.entrySet()) {
             Long productId = entry.getKey();
             Integer quantity = entry.getValue();
             
             ProductModel product = productService.findModelById(productId);
             
-            // Verificar si el producto tiene suficiente stock de ingredientes
-            if (!productInventoryService.canSellProduct(productId, BigDecimal.valueOf(quantity))) {
+            // Obtener detalle del error de stock
+            String stockError = productInventoryService.getStockErrorDetail(productId, BigDecimal.valueOf(quantity));
+            
+            if (stockError != null) {
                 log.error("Stock insuficiente para producto: {} (ID: {}), cantidad solicitada: {}", 
                     product.getName(), productId, quantity);
-                throw new IllegalArgumentException(
-                    String.format("Stock insuficiente de ingredientes para el producto: %s. " +
-                        "No se puede crear el pedido.", product.getName())
-                );
+                
+                if (allErrors.length() > 0) {
+                    allErrors.append(" | ");
+                }
+                allErrors.append(String.format("%s (%d unidades): %s", 
+                    product.getName(), quantity, stockError));
             }
         }
         
-        log.info("Validación de stock completada exitosamente");
+        if (allErrors.length() > 0) {
+            throw new IllegalArgumentException(
+                "Stock insuficiente para completar el pedido. " + allErrors.toString()
+            );
+        }
+        
+        log.info("Validación de stock completada exitosamente");;
     }
 
     @Override
@@ -213,6 +225,9 @@ public class OrderServiceImpl implements OrderService {
         orderModel.setPaid(false);
 
         OrderModel saved = orderRepository.save(orderModel);
+
+        // Descontar inventario al crear la orden
+        this.deductInventoryForOrder(saved);
 
         return orderMapper.toDto(saved);
     }
@@ -390,9 +405,34 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponseDto update(UUID id, OrderRequestDto order) {
         OrderModel orderModel = this.findModelById(id);
 
+        // Bloquear modificaciones si el pedido ya está en READY o estados posteriores
+        OrderStatus currentStatus = orderModel.getOrderStatus();
+        if (currentStatus == OrderStatus.READY || 
+            currentStatus == OrderStatus.PAID || 
+            currentStatus == OrderStatus.COMPLETED || 
+            currentStatus == OrderStatus.CANCELLED) {
+            throw new IllegalArgumentException(
+                String.format("No se puede modificar un pedido en estado %s. El pedido ya fue preparado o finalizado.", 
+                    currentStatus)
+            );
+        }
+
+        // Guardar estado anterior de productos para calcular diferencias de inventario
+        Map<Long, Integer> previousQuantities = new HashMap<>();
+        if (orderModel.getProductOrders() != null) {
+            for (ProductOrderModel po : orderModel.getProductOrders()) {
+                if (po.getProduct() != null && po.getProduct().getId() != null) {
+                    previousQuantities.put(po.getProduct().getId(), 
+                        po.getQuantity() == null ? 0 : po.getQuantity());
+                }
+            }
+        }
+
         List<ProductOrderRequestDto> productOrderDtos = order.getProductOrders();
         List<ProductOrderModel> incoming = productOrderMapper.toModel(productOrderDtos);
 
+        // Calcular nuevas cantidades para validar stock
+        Map<Long, Integer> newQuantities = new HashMap<>();
         IntStream.range(0, incoming.size()).forEachOrdered(i -> {
             ProductOrderModel po = incoming.get(i);
             Long productId = productOrderDtos.get(i).getProductId();
@@ -402,7 +442,11 @@ public class OrderServiceImpl implements OrderService {
             if (po.getSubtotal() == null && po.getQuantity() != null && po.getUnitPrice() != null) {
                 po.setSubtotal(po.getQuantity() * po.getUnitPrice());
             }
+            newQuantities.put(productId, po.getQuantity() == null ? 0 : po.getQuantity());
         });
+
+        // Validar stock solo para incrementos (diferencia positiva)
+        validateStockForOrderUpdate(previousQuantities, newQuantities);
 
         List<ProductOrderModel> existing = Optional.ofNullable(orderModel.getProductOrders()).orElseGet(() -> {
             List<ProductOrderModel> list = new ArrayList<>();
@@ -453,11 +497,127 @@ public class OrderServiceImpl implements OrderService {
         double totalPrice = this.calculateOrderPrice(existing);
         orderModel.setTotalPrice(totalPrice);
 
-        orderModel.setOrderStatus(order.getOrderStatus());
+        // Mantener el estado actual si no se envía uno nuevo
+        if (order.getOrderStatus() != null) {
+            orderModel.setOrderStatus(order.getOrderStatus());
+        }
+        // Si es null, mantiene el estado actual (no lo cambiamos)
+        
         orderModel.setComment(order.getComment());
 
         OrderModel saved = orderRepository.save(orderModel);
+
+        // Ajustar inventario según las diferencias
+        adjustInventoryForOrderUpdate(previousQuantities, newQuantities);
+
         return orderMapper.toDto(saved);
+    }
+
+    /**
+     * Valida que haya stock suficiente para los incrementos en la orden.
+     * Solo valida productos nuevos o con cantidad aumentada.
+     */
+    private void validateStockForOrderUpdate(Map<Long, Integer> previousQuantities, 
+                                              Map<Long, Integer> newQuantities) {
+        log.info("Validando stock para actualización de orden");
+        
+        StringBuilder allErrors = new StringBuilder();
+        
+        for (Map.Entry<Long, Integer> entry : newQuantities.entrySet()) {
+            Long productId = entry.getKey();
+            int newQty = entry.getValue();
+            int prevQty = previousQuantities.getOrDefault(productId, 0);
+            int difference = newQty - prevQty;
+            
+            // Solo validar si hay incremento
+            if (difference > 0) {
+                ProductModel product = productService.findModelById(productId);
+                
+                String stockError = productInventoryService.getStockErrorDetail(productId, BigDecimal.valueOf(difference));
+                
+                if (stockError != null) {
+                    log.error("Stock insuficiente para incremento de producto: {} (ID: {}), " +
+                        "cantidad adicional solicitada: {}", product.getName(), productId, difference);
+                    
+                    if (allErrors.length() > 0) {
+                        allErrors.append(" | ");
+                    }
+                    allErrors.append(String.format("%s (+%d): %s", 
+                        product.getName(), difference, stockError));
+                }
+            }
+        }
+        
+        if (allErrors.length() > 0) {
+            throw new IllegalArgumentException(
+                "Stock insuficiente para modificar el pedido. " + allErrors.toString()
+            );
+        }
+        
+        log.info("Validación de stock para actualización completada");
+    }
+
+    /**
+     * Ajusta el inventario según los cambios en la orden.
+     * - Restaura stock para productos eliminados o con cantidad reducida
+     * - Deduce stock para productos nuevos o con cantidad aumentada
+     */
+    private void adjustInventoryForOrderUpdate(Map<Long, Integer> previousQuantities, 
+                                                Map<Long, Integer> newQuantities) {
+        log.info("Ajustando inventario para actualización de orden");
+        
+        // Procesar todos los productos (anteriores y nuevos)
+        Set<Long> allProductIds = new java.util.HashSet<>();
+        allProductIds.addAll(previousQuantities.keySet());
+        allProductIds.addAll(newQuantities.keySet());
+        
+        for (Long productId : allProductIds) {
+            int prevQty = previousQuantities.getOrDefault(productId, 0);
+            int newQty = newQuantities.getOrDefault(productId, 0);
+            int difference = newQty - prevQty;
+            
+            if (difference == 0) {
+                continue; // Sin cambios
+            }
+            
+            List<ProductInventoryResponseDto> recipe = productInventoryService.getRecipeByProductId(productId);
+            
+            if (recipe.isEmpty()) {
+                log.debug("Producto {} no tiene receta (puede ser bebida/descartable con inventario directo)", productId);
+                continue;
+            }
+            
+            for (ProductInventoryResponseDto ingredient : recipe) {
+                BigDecimal quantityPerUnit = ingredient.getQuantity();
+                BigDecimal totalChange = quantityPerUnit.multiply(BigDecimal.valueOf(Math.abs(difference)));
+                
+                if (difference > 0) {
+                    // Incremento: descontar del inventario
+                    log.info("Descontando {} {} de {} (incremento de {} unidades de producto)", 
+                        totalChange, ingredient.getUnitOfMeasure(), 
+                        ingredient.getInventoryName(), difference);
+                    
+                    inventoryService.deductStock(
+                        ingredient.getInventoryId(),
+                        totalChange,
+                        ingredient.getUnitOfMeasure()
+                    );
+                } else {
+                    // Decremento: restaurar al inventario
+                    log.info("Restaurando {} {} de {} (reducción de {} unidades de producto)", 
+                        totalChange, ingredient.getUnitOfMeasure(), 
+                        ingredient.getInventoryName(), Math.abs(difference));
+                    
+                    inventoryService.restoreStock(
+                        ingredient.getInventoryId(),
+                        totalChange,
+                        ingredient.getUnitOfMeasure()
+                    );
+                }
+            }
+        }
+        
+        log.info("Ajuste de inventario completado");
     }
 
     @Override
@@ -478,7 +638,7 @@ public class OrderServiceImpl implements OrderService {
             tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
             return orderMapper.toDto(orderRepository.save(order));
         } else if (newStatus.equals(OrderStatus.COMPLETED)) {
-            this.deductInventoryForOrder(order);// HU5: DEDUCIR STOCK AL COMPLETAR ORDEN
+            // Ya no descontamos aquí - se descuenta al crear la orden
             tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
         }
 

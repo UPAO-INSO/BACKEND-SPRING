@@ -1,11 +1,11 @@
 package team.upao.dev.inventory.service;
 
+import java.math.BigDecimal;
+import java.util.List;
+
 import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
 import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
 import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
-
-import java.math.BigDecimal;
-import java.util.List;
 
 public interface ProductInventoryService {
     
@@ -56,6 +56,12 @@ public interface ProductInventoryService {
      * Verificar si se puede vender un producto (stock de todos sus ingredientes)
      */
     boolean canSellProduct(Long productId, BigDecimal quantity);
+    
+    /**
+     * Verificar stock y retornar mensaje detallado de error si no hay suficiente
+     * @return null si hay stock suficiente, mensaje de error si no
+     */
+    String getStockErrorDetail(Long productId, BigDecimal quantity);
     
     /**
      * Obtener ingredientes para deducir (receta de un producto)

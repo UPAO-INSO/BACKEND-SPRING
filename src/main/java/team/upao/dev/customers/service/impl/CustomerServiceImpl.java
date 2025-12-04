@@ -23,7 +23,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CustomerServiceImpl implements CustomerService {
-    private final ICustomerRepository clientRepository;
+    private final ICustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
 
     private DocumentType choiceDocumentType(String documentNumber) {
@@ -45,13 +45,13 @@ public class CustomerServiceImpl implements CustomerService {
 
         log.info("Creating customer: {}", customerModel);
 
-        return customerMapper.toDto(clientRepository.save(customerModel));
+        return customerMapper.toDto(customerRepository.save(customerModel));
     }
 
     @Override
     public PaginationResponseDto<CustomerResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
-        final Page<CustomerModel> entities = clientRepository.findAll(pageable);
+        final Page<CustomerModel> entities = customerRepository.findAll(pageable);
         final List<CustomerResponseDto> entitiesDto = customerMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
                 entitiesDto,
@@ -65,7 +65,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponseDto findById(Long id) {
-        CustomerModel client = this.clientRepository
+        CustomerModel client = this.customerRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + id));
         return customerMapper.toDto(client);
@@ -73,9 +73,16 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerModel findModelById(Long id) {
-        return this.clientRepository
+        return this.customerRepository
                 .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + id));
+    }
+
+    @Override
+    public CustomerModel findModelByCustomerIdInPayment(Long id) {
+        return this.customerRepository
+                .findByOrderIdInPaymentModel(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found with id in payment: " + id));
     }
 
     @Override
@@ -87,7 +94,7 @@ public class CustomerServiceImpl implements CustomerService {
         client.setEmail(clientRequestDto.getEmail());
         client.setPhone(clientRequestDto.getPhone());
 
-        return  customerMapper.toDto(clientRepository.save(client));
+        return  customerMapper.toDto(customerRepository.save(client));
     }
 
     @Override
@@ -102,7 +109,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponseDto findByEmail(String email) {
-        CustomerModel client = clientRepository
+        CustomerModel client = customerRepository
                 .findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with email: " + email));
 
@@ -111,7 +118,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponseDto findByPhone(String phone) {
-        CustomerModel client = clientRepository
+        CustomerModel client = customerRepository
                 .findByPhone(phone)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with phone: " + phone));
 
@@ -120,7 +127,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public List<CustomerResponseDto> findByDocument(String document) {
-        List<CustomerModel> client = clientRepository
+        List<CustomerModel> client = customerRepository
                 .findByDocumentNumberContaining(document).stream().toList();
 
         return customerMapper.toDto(client);

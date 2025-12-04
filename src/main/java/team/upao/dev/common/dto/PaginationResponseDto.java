@@ -6,6 +6,7 @@ import java.util.Collection;
 
 @Getter @Setter
 @AllArgsConstructor @NoArgsConstructor
+@Builder
 public class PaginationResponseDto<T> {
     private Collection<T> content;
     private Integer totalPages;

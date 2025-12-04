@@ -1,5 +1,6 @@
 package team.upao.dev.orders.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
@@ -56,16 +57,19 @@ public class OrderModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id")
+    @JsonIgnore
     private TableModel table;
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("order-productOrders")
+    @JsonIgnore
     private List<ProductOrderModel> productOrders = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference("order-employees")
+    @JsonIgnore
     private List<OrderEmployeeModel> ordersEmployee = new ArrayList<>();
 
     @Column(nullable = false)

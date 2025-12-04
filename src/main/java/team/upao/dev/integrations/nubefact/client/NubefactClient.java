@@ -6,6 +6,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import team.upao.dev.integrations.nubefact.dto.NubefactInvoiceRequestDto;
+import team.upao.dev.integrations.nubefact.dto.NubefactReceiptRequestDto;
 
 @Slf4j
 @Component
@@ -23,6 +24,10 @@ public class NubefactClient {
     }
 
     public ResponseEntity<String> sendInvoice(NubefactInvoiceRequestDto invoiceRequest) {
+        return sendToNubefact(invoiceRequest);
+    }
+
+    public ResponseEntity<String> sendReceipt(NubefactReceiptRequestDto invoiceRequest) {
         return sendToNubefact(invoiceRequest);
     }
 

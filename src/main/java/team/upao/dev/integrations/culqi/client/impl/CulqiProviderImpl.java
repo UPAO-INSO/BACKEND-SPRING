@@ -57,6 +57,7 @@ public class CulqiProviderImpl implements CulqiProvider {
         );
 
         order.put("client_details", clientDetailsMap);
+        order.put(("metadata"), orderRequest.getMetadata());
 
         log.info("CulqiProvider :: createOrderMap => {}", order);
         return order;

@@ -10,7 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import team.upao.dev.integrations.culqi.client.CulqiProvider;
 import team.upao.dev.integrations.culqi.dto.CulqiOrderRequestDto;
-import team.upao.dev.integrations.culqi.service.PaymentService;
+import team.upao.dev.integrations.culqi.service.CulqiService;
+import team.upao.dev.payments.dto.PaymentRequestDto;
+import team.upao.dev.payments.mapper.PaymentMapper;
+import team.upao.dev.payments.service.PaymentService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,9 +21,11 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PaymentServiceImpl implements PaymentService {
+public class CulqiServiceImpl implements CulqiService {
     private final CulqiProvider culqiProvider;
     private final ObjectMapper objectMapper;
+    private final PaymentService paymentService;
+    private final PaymentMapper paymentMapper;
 
     @Override
     public ResponseEntity<Object> createOrder(CulqiOrderRequestDto orderRequest) {
@@ -32,6 +37,9 @@ public class PaymentServiceImpl implements PaymentService {
 
             if (status.is2xxSuccessful()) {
                 log.info("Orden creada correctamente => status: {}, body: {}", status.value(), body);
+                PaymentRequestDto paymentRequest = paymentMapper.toPaymentRequestDto(body, rawBody);
+                if (paymentRequest == null) throw new IllegalStateException("No se pudo mapear la respuesta de Culqi a PaymentRequestDto");
+                paymentService.create(paymentRequest);
                 return new ResponseEntity<>(body, status);
             } else {
                 Map<String, Object> errorPayload = new HashMap<>();
@@ -57,7 +65,7 @@ public class PaymentServiceImpl implements PaymentService {
             try {
                 return objectMapper.readValue(bodyStr, new TypeReference<Map<String, Object>>() {});
             } catch (Exception ex) {
-                log.debug("No se pudo parsear body como JSON, se devuelve String crudo", ex);
+                log.error("No se pudo parsear body como JSON, se devuelve String crudo", ex);
                 return bodyStr;
             }
         }

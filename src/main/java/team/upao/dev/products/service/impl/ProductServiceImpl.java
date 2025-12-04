@@ -1,26 +1,36 @@
 package team.upao.dev.products.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
 import team.upao.dev.exceptions.DuplicateResourceException;
 import team.upao.dev.exceptions.ResourceNotFoundException;
+import team.upao.dev.inventory.dto.ProductInventoryRequestDto;
+import team.upao.dev.inventory.dto.ProductInventoryResponseDto;
+import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
+import team.upao.dev.inventory.service.ProductInventoryService;
 import team.upao.dev.products.dto.ProductRequestDto;
 import team.upao.dev.products.dto.ProductResponseDto;
+import team.upao.dev.products.dto.RecipeItemDto;
 import team.upao.dev.products.mapper.ProductMapper;
 import team.upao.dev.products.model.ProductModel;
 import team.upao.dev.products.model.ProductTypeModel;
 import team.upao.dev.products.repository.IProductRepository;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.products.service.ProductTypeService;
-
-import java.util.List;
 
 @Service
 @Slf4j
@@ -29,6 +39,7 @@ public class ProductServiceImpl implements ProductService {
     private final IProductRepository productRepository;
     private final ProductTypeService productTypeService;
     private final ProductMapper productMapper;
+    private final ProductInventoryService productInventoryService;
 
     @Override
     public List<ProductResponseDto> findByIds(List<Long> ids) {
@@ -135,6 +146,18 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(productModel);
 
+        if (product.getRecipe() != null && !product.getRecipe().isEmpty()) {
+            for (RecipeItemDto item : product.getRecipe()) {
+                ProductInventoryRequestDto inventoryRequest = ProductInventoryRequestDto.builder()
+                        .productId(productModel.getId())
+                        .inventoryId(item.getInventoryId())
+                        .quantity(item.getQuantity())
+                        .unitOfMeasure(item.getUnitOfMeasure())
+                        .build();
+                productInventoryService.createProductInventory(inventoryRequest);
+            }
+        }
+
         return productMapper.toDto(productModel);
     }
 
@@ -151,7 +174,64 @@ public class ProductServiceImpl implements ProductService {
 
         productRepository.save(productExisting);
 
-        return productMapper.toDto(productExisting);
+        // Update Recipe
+        if (product.getRecipe() != null) {
+            log.info("Updating recipe for product {}. New recipe size: {}", id, product.getRecipe().size());
+            
+            List<ProductInventoryResponseDto> existingRecipeList = productInventoryService.getRecipeByProductId(id);
+            log.info("Existing recipe size: {}", existingRecipeList.size());
+            
+            Map<Long, ProductInventoryResponseDto> existingRecipeMap = existingRecipeList.stream()
+                    .collect(Collectors.toMap(ProductInventoryResponseDto::getInventoryId, Function.identity(), (a, b) -> a));
+            
+            List<RecipeItemDto> newRecipe = product.getRecipe();
+            Set<Long> newInventoryIds = newRecipe.stream()
+                    .map(RecipeItemDto::getInventoryId)
+                    .collect(Collectors.toSet());
+
+            // 1. Delete items not in new recipe
+            for (ProductInventoryResponseDto existing : existingRecipeList) {
+                if (!newInventoryIds.contains(existing.getInventoryId())) {
+                    log.info("Deleting recipe item: {}", existing.getId());
+                    productInventoryService.deleteProductInventory(existing.getId());
+                }
+            }
+
+            // 2. Create or Update items
+            for (RecipeItemDto newItem : newRecipe) {
+                ProductInventoryResponseDto existing = existingRecipeMap.get(newItem.getInventoryId());
+
+                if (existing == null) {
+                    log.info("Creating new recipe item for inventory: {}", newItem.getInventoryId());
+                    // Create
+                    ProductInventoryRequestDto createRequest = ProductInventoryRequestDto.builder()
+                            .productId(id)
+                            .inventoryId(newItem.getInventoryId())
+                            .quantity(newItem.getQuantity())
+                            .unitOfMeasure(newItem.getUnitOfMeasure())
+                            .build();
+                    productInventoryService.createProductInventory(createRequest);
+                } else {
+                    // Update if changed
+                    // Use compareTo for BigDecimal to ignore scale differences (e.g. 1.00 vs 1)
+                    boolean quantityChanged = existing.getQuantity().compareTo(newItem.getQuantity()) != 0;
+                    boolean unitChanged = !existing.getUnitOfMeasure().equals(newItem.getUnitOfMeasure());
+                    
+                    if (quantityChanged || unitChanged) {
+                        log.info("Updating recipe item: {}. Qty changed: {}, Unit changed: {}", 
+                                existing.getId(), quantityChanged, unitChanged);
+                        
+                        ProductInventoryUpdateDto updateRequest = ProductInventoryUpdateDto.builder()
+                                .quantity(newItem.getQuantity())
+                                .unitOfMeasure(newItem.getUnitOfMeasure())
+                                .build();
+                        productInventoryService.updateProductInventory(existing.getId(), updateRequest);
+                    }
+                }
+            }
+        } else {
+            log.info("No recipe provided for update (null)");
+        }        return productMapper.toDto(productExisting);
     }
 
     @Override

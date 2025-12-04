@@ -106,9 +106,46 @@ public class OrderServiceImpl implements OrderService {
         return total.doubleValue();
     }
 
+    /**
+     * Valida que haya stock suficiente para todos los productos de una orden.
+     * Se llama ANTES de crear la orden para evitar pedidos que no se puedan completar.
+     */
+    private void validateStockForOrder(List<ProductOrderRequestDto> productOrders) {
+        log.info("Validando stock para {} productos en la orden", productOrders.size());
+        
+        // Agregar cantidades por producto (en caso de duplicados)
+        Map<Long, Integer> productQuantities = new HashMap<>();
+        for (ProductOrderRequestDto po : productOrders) {
+            productQuantities.merge(po.getProductId(), po.getQuantity(), Integer::sum);
+        }
+        
+        // Validar cada producto
+        for (Map.Entry<Long, Integer> entry : productQuantities.entrySet()) {
+            Long productId = entry.getKey();
+            Integer quantity = entry.getValue();
+            
+            ProductModel product = productService.findModelById(productId);
+            
+            // Verificar si el producto tiene suficiente stock de ingredientes
+            if (!productInventoryService.canSellProduct(productId, BigDecimal.valueOf(quantity))) {
+                log.error("Stock insuficiente para producto: {} (ID: {}), cantidad solicitada: {}", 
+                    product.getName(), productId, quantity);
+                throw new IllegalArgumentException(
+                    String.format("Stock insuficiente de ingredientes para el producto: %s. " +
+                        "No se puede crear el pedido.", product.getName())
+                );
+            }
+        }
+        
+        log.info("Validación de stock completada exitosamente");
+    }
+
     @Override
     @Transactional
     public OrderResponseDto create(OrderRequestDto order) {
+        // Validar stock ANTES de crear la orden
+        validateStockForOrder(order.getProductOrders());
+        
         OrderModel orderModel = orderMapper.toModel(order);
 
         if (order.getTableId() != null) {

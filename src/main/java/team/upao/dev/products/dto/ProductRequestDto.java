@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter @Setter
 @Builder
 @NoArgsConstructor
@@ -31,5 +33,9 @@ public class ProductRequestDto {
 
     private Boolean available;
 
+    // Para platos (ENTRADAS, SEGUNDOS, CARTA) - lista de ingredientes
     private java.util.List<RecipeItemDto> recipe;
+    
+    // Para bebidas y descartables - cantidad inicial en inventario
+    private BigDecimal initialQuantity;
 }

@@ -1,7 +1,6 @@
 package team.upao.dev.integrations.nubefact.dto;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -9,44 +8,56 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter @Setter
+@Data
 @AllArgsConstructor @NoArgsConstructor
 @Builder
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class NubefactInvoiceRequestDto {
     @Builder.Default
     private String operacion = "generar_comprobante";
+    @JsonProperty("tipo_de_comprobante")
     @NotBlank
-    private Integer tipoDeComprobante;
+    private Integer tipoDeComprobante = 1;
     @NotBlank
     private String serie;
     @NotBlank
     private Integer numero;
+    @JsonProperty("sunat_transaction")
     @NotBlank
     private Integer sunatTransaction;
+    @JsonProperty("cliente_tipo_de_documento")
     @NotBlank
     private Integer clienteTipoDeDocumento;
+    @JsonProperty("cliente_numero_de_documento")
     @NotBlank
     private String clienteNumeroDeDocumento;
+    @JsonProperty("cliente_denominacion")
     @NotBlank
     private String clienteDenominacion;
+    @JsonProperty("cliente_direccion")
     @NotBlank
     private String clienteDireccion;
+    @JsonProperty("cliente_email")
     @NotBlank
     @Email
     private String clienteEmail;
+    @JsonProperty("cliente_email_1")
     @Email
     private String clienteEmail1; // Optional
+    @JsonProperty("cliente_email_2")
     @Email
     private String clienteEmail2; // Optional
+    @JsonProperty("fecha_de_emision")
     @NotBlank
     private String fechaDeEmision;
+    @JsonProperty("fecha_de_vencimiento")
     private String fechaDeVencimiento; // Optional
     @NotBlank
     private Integer moneda;
+    @JsonProperty("tipo_de_cambio")
     private String tipoDeCambio; // Optional
     @NotBlank
-    private Double porcentajeDeIgv;
+    @Builder.Default
+    private Double porcentajeDeIgv = 18.00;
 
     private String descuentoGlobal; // Optional
     private String totalDescuento; // Optional

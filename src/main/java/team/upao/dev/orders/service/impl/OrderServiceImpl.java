@@ -401,6 +401,13 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public OrderModel findModelByOrderIdInPayment(UUID id) {
+        return orderRepository.findByOrderIdInPaymentModel(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
+    }
+
+    @Override
     @Transactional
     public OrderResponseDto update(UUID id, OrderRequestDto order) {
         OrderModel orderModel = this.findModelById(id);

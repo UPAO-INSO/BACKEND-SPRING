@@ -14,6 +14,7 @@ import team.upao.dev.employees.mapper.EmployeeMapper;
 import team.upao.dev.employees.model.EmployeeModel;
 import team.upao.dev.employees.repository.IEmployeeRepository;
 import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.jobs.service.JobService;
 import team.upao.dev.users.service.UserService;
 
@@ -58,7 +59,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeRequestDto findById(Long id) {
         EmployeeModel employee = employeeRepository
                 .findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
 
         return employeeMapper.toDto(employee);
     }
@@ -67,7 +68,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeModel findModelById(Long id) {
         return employeeRepository
                 .findById(id)
-                .orElseThrow(() -> new RuntimeException("Employee not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + id));
     }
 
     @Override

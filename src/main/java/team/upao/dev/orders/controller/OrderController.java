@@ -7,15 +7,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
-import team.upao.dev.orders.dto.ChangeOrderStatusDto;
-import team.upao.dev.orders.dto.OrderRequestDto;
-import team.upao.dev.orders.dto.OrderResponseDto;
-import team.upao.dev.orders.dto.OrderFilterDto;
+import team.upao.dev.orders.dto.*;
 import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.orders.service.OrderService;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +24,11 @@ public class OrderController {
     @PostMapping("/create")
     public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.create(order));
+    }
+
+    @PatchMapping("/product-orders/serve")
+    public ResponseEntity<OrderResponseDto> serveProductOrder(@Valid @RequestBody ServeProductOrderRequestDto request) {
+        return ResponseEntity.ok(orderService.serveProductOrder(request));
     }
 
     @GetMapping
@@ -51,7 +54,7 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> findById(@PathVariable Long id) {
+    public ResponseEntity<OrderResponseDto> findById(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.findById(id));
     }
 
@@ -68,7 +71,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<OrderResponseDto> update(@PathVariable Long id, @RequestBody @Valid OrderRequestDto order) {
+    public ResponseEntity<OrderResponseDto> update(@PathVariable UUID id, @RequestBody @Valid OrderRequestDto order) {
         return ResponseEntity.ok(orderService.update(id, order));
     }
 
@@ -79,7 +82,7 @@ public class OrderController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
+    public ResponseEntity<String> delete(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.delete(id));
     }
 }

@@ -1,9 +1,7 @@
 package team.upao.dev.exceptions;
 
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +17,17 @@ import java.util.*;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+        return buildResponseEntity(new ApiError(HttpStatus.NOT_FOUND, ex.getMessage(), request.getDescription(false)));
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiError> handleDuplicateResourceException(DuplicateResourceException ex, WebRequest request) {
+        return buildResponseEntity(new ApiError(HttpStatus.CONFLICT, ex.getMessage(), request.getDescription(false)));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiError> handlerArgumentException(IllegalArgumentException ex, WebRequest request) {
         return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, ex.getMessage(), request.getDescription(false)));
@@ -98,7 +107,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, apiError.getStatus());
     }
 
-    @Data
+    @Getter @Setter
     @AllArgsConstructor @NoArgsConstructor
     public static class ApiError {
         private LocalDateTime timestamp = LocalDateTime.now();

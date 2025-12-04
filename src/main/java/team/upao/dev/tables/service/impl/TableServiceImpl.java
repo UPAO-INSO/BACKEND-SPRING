@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.DuplicateResourceException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.tables.dto.TableDto;
 import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.mapper.TableMapper;
@@ -51,14 +52,14 @@ public class TableServiceImpl implements TableService {
     public TableModel findById(Long id) {
         return tableRepository
                 .findById(id)
-                .orElseThrow(() -> new NotFoundException("Table not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found with id: " + id));
     }
 
     @Override
     public TableModel findByNumber(String number) {
         return tableRepository
                 .findByNumber(number)
-                .orElseThrow(() -> new NotFoundException("Table not found with id: " + number));
+                .orElseThrow(() -> new ResourceNotFoundException("Table not found with id: " + number));
     }
 
     @Override
@@ -69,7 +70,7 @@ public class TableServiceImpl implements TableService {
     @Override
     public TableModel create(TableDto table) {
         if(existsByNumber(table.getNumber())) {
-            throw new NotFoundException("Table already exists with number: " + table.getNumber());
+            throw new DuplicateResourceException("Table already exists with number: " + table.getNumber());
         }
 
         log.info("Table create: {}", table);
@@ -92,7 +93,8 @@ public class TableServiceImpl implements TableService {
 
     @Override
     public String delete(Long id) {
-        return "";
+        this.findById(id);
+        return String.format("Table deleted with id: %s", id);
     }
 
     @Override

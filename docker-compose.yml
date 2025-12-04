@@ -2,26 +2,43 @@ services:
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "${PORT}:${PORT}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
+      - PORT=${PORT}
+      - DB_HOST=${DB_HOST}
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - NUBEFACT_API_URL=${NUBEFACT_API_URL}
       - NUBEFACT_API_TOKEN=${NUBEFACT_API_TOKEN}
+      - CULQI_RSA_PUBLIC_KEY=${CULQI_RSA_PUBLIC_KEY}
+      - CULQI_RSA_ID=${CULQI_RSA_ID}
+      - CULQI_SECRET_KEY=${CULQI_SECRET_KEY}
+      - CULQI_PUBLIC_KEY=${CULQI_PUBLIC_KEY}
+      - FACTILIZA_API_URL=${FACTILIZA_API_URL}
+      - FACTILIZA_API_TOKEN=${FACTILIZA_API_TOKEN}
+    restart: on-failure
 
   db:
-    image: mysql:8.0
+    image: mysql:9.5
     ports:
-      - "3306:3306"
+      - "${DB_PORT}:${DB_PORT}"
     environment:
+      - DB_PORT=${DB_PORT}
       - MYSQL_ROOT_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
       - MYSQL_DATABASE=${DB_NAME}
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   db_data:

@@ -8,6 +8,4 @@ public interface AuthService {
     void register(SignupDto request);
     TokensResponseDto refreshToken(RefreshTokenRequestDto token);
     AuthResponseDto checkAuthStatus(UserDto user, String accessToken);
-
-
 }

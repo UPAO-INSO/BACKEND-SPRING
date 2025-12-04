@@ -18,10 +18,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Entity
 @Builder
-@Table(name = "user")
+@Table(
+        name = "user",
+        indexes = {
+                @Index(name = "idx_user_email", columnList = "email"),
+                @Index(name = "idx_user_username", columnList = "username")
+        }
+)
 @EntityListeners(AuditingEntityListener.class)
 public class UserModel implements UserDetails {
     @Id
@@ -53,7 +60,7 @@ public class UserModel implements UserDetails {
     private Instant lastLogin;
 
     @Builder.Default
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     private Boolean isActive = true;
 
     @Builder.Default

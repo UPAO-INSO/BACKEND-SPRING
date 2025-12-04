@@ -1,12 +1,13 @@
 package team.upao.dev.users.dto;
 
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.users.enums.UserRole;
 
 @Builder
-@Data
+@Getter @Setter
 public class UserResponseDto {
     private Long id;
 

@@ -2,18 +2,19 @@ package team.upao.dev.orders.dto;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import team.upao.dev.orders.enums.OrderStatus;
-import team.upao.dev.products.dto.ProductOrderRequestDto;
 import team.upao.dev.products.dto.ProductOrderResponseDto;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
-@Data
+@Getter @Setter
 @Builder
 public class OrderResponseDto {
-    private Long id;
+    private UUID id;
 
     private OrderStatus orderStatus;
 
@@ -36,5 +37,5 @@ public class OrderResponseDto {
     private List<ProductOrderResponseDto> productOrders;
 
     @NotNull
-    private List<OrderEmployeeDto> orderEmployees;
+    private List<OrderEmployeeResponseDto> orderEmployees;
 }

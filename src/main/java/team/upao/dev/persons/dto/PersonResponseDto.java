@@ -1,10 +1,11 @@
 package team.upao.dev.persons.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Instant;
 
-@Data
+@Getter @Setter
 public class PersonResponseDto {
     private Long id;
 

@@ -2,16 +2,19 @@ package team.upao.dev.products.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import team.upao.dev.orders.model.OrderModel;
+import team.upao.dev.products.enums.ProductOrderStatus;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "product_order")
+@Table(
+        name = "product_order",
+        indexes = @Index(name = "idx_product_order_product_id", columnList = "product_id")
+)
 public class ProductOrderModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,6 +28,15 @@ public class ProductOrderModel {
 
     @Column(nullable = false)
     private Double subtotal;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Integer servedQuantity = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private ProductOrderStatus status = ProductOrderStatus.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)

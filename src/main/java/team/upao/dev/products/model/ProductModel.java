@@ -1,18 +1,23 @@
 package team.upao.dev.products.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import team.upao.dev.inventory.model.ProductInventoryModel;
 import java.util.ArrayList;
 import java.util.List;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "product")
+@Table(
+        name = "product",
+        indexes = {
+                @Index(name = "idx_product_name", columnList = "name"),
+                @Index(name = "idx_product_type_id", columnList = "product_type_id")
+        }
+)
 public class ProductModel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,11 +32,11 @@ public class ProductModel {
     @Column(nullable = false)
     private Double price;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
     private Boolean active = true;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")
     @Builder.Default
     private Boolean available = true;
 
@@ -42,4 +47,9 @@ public class ProductModel {
     @Builder.Default
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductOrderModel> productOrders = new ArrayList<>();
+
+    // Relación con la tabla ProductInventoryModel
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductInventoryModel> productInventory = new ArrayList<>();
+
 }

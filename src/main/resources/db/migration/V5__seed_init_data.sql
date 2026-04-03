@@ -5,7 +5,11 @@ VALUES (1, 'GERENTE'),
        (4, 'MESERO');
 
 INSERT INTO `persons` (id, name, lastname, phone)
-VALUES (1, 'Gerson', 'Portal', '+51987654321');
+VALUES (1, 'Admin', 'Test', '+51987654321'),
+       (2, 'Pagos', 'Test', '+51999999999');
+
+INSERT INTO `customers` (id, document_type, document_number, email, departament, province, district, complete_address)
+VALUES (2, 'DNI','00000000', 'gportallinares21@gmail.com', 'LA LIBERTAD', 'TRUJILLO', 'TRUJILLO', 'AV. LOS INCAS 123');
 
 INSERT INTO `user` (id, username, password, email, role)
 VALUES (1, 'admin', '$2a$12$b8bevAwTSbkRUuWftiqli.aNmCzn5IFryaYgr8e1VWjbTCQWZtkE6', 'admin@email.com', 'ADMIN');
@@ -231,3 +235,33 @@ VALUES (1,
         'CHICHARRON DE POLLO',
         13,
         5);
+
+-- =====================================================
+-- Inventario para bebidas y descartables
+-- =====================================================
+
+-- Crear registros en inventory para bebidas (tipo BEVERAGE)
+INSERT INTO `inventory` (id, name, quantity, type, unit_of_measure)
+VALUES
+    (100, 'INCA KOLA PERSONAL', 0, 'BEVERAGE', 'UNIDAD'),
+    (101, 'INCA KOLA 1L', 0, 'BEVERAGE', 'UNIDAD');
+
+-- Crear registros en inventory para descartables (tipo DISPOSABLE)
+INSERT INTO `inventory` (id, name, quantity, type, unit_of_measure)
+VALUES
+    (102, 'TAPER GRANDE', 0, 'DISPOSABLE', 'UNIDAD'),
+    (103, 'TAPER CHICO', 0, 'DISPOSABLE', 'UNIDAD'),
+    (104, 'TAPER SOPA', 0, 'DISPOSABLE', 'UNIDAD');
+
+-- Relaciones product_inventory para bebidas
+INSERT INTO `product_inventory` (product_id, inventory_id, quantity, unit_of_measure)
+VALUES
+    (4, 100, 1, 'UNIDAD'),
+    (5, 101, 1, 'UNIDAD');
+
+-- Relaciones product_inventory para descartables
+INSERT INTO `product_inventory` (product_id, inventory_id, quantity, unit_of_measure)
+VALUES
+    (23, 102, 1, 'UNIDAD'),
+    (24, 103, 1, 'UNIDAD'),
+    (25, 104, 1, 'UNIDAD');

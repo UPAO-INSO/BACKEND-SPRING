@@ -22,6 +22,7 @@ public class ProductTypeModel {
     @Column(nullable = false)
     private String name;
 
+    @Builder.Default
     @OneToMany(mappedBy = "productType", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductModel> products = new ArrayList<>();
 }

@@ -18,6 +18,8 @@ import team.upao.dev.auth.service.AuthService;
 import team.upao.dev.auth.jwt.JwtService;
 import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.exceptions.DuplicateResourceException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.jobs.enums.JobEnum;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.service.impl.JobServiceImpl;
@@ -86,11 +88,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void register(final SignupDto request) {
         if (this.userService.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException("Username already exists");
+            throw new DuplicateResourceException("Username already exists");
         }
 
         if (this.userService.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email already exists");
+            throw new DuplicateResourceException("Email already exists");
         }
 
         UserModel user = UserModel.builder()
@@ -125,7 +127,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponseDto checkAuthStatus(UserDto userDto, String accessToken) {
         UserModel userModel = userService.findModelByUsername(userDto.getUsername());
         if (userModel == null || !userModel.getIsActive()) {
-            throw new IllegalArgumentException("User is not active or does not exist");
+            throw new ResourceNotFoundException("User is not active or does not exist");
         }
 
         UsernamePasswordAuthenticationToken auth =

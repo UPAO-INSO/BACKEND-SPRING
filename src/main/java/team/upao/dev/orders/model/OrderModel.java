@@ -1,8 +1,10 @@
 package team.upao.dev.orders.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -10,9 +12,11 @@ import team.upao.dev.orders.enums.OrderStatus;
 import team.upao.dev.products.model.ProductOrderModel;
 import team.upao.dev.tables.model.TableModel;
 
+import java.sql.Types;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @EntityListeners(AuditingEntityListener.class)
 @Getter @Setter
@@ -28,11 +32,14 @@ import java.util.List;
 )
 public class OrderModel {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private  Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @JdbcTypeCode(Types.VARCHAR)
+    @Column(name = "id", length = 36, nullable = false, updatable = false, columnDefinition = "VARCHAR(36)")
+    private UUID id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private OrderStatus orderStatus = OrderStatus.PENDING;
 
     @Column(nullable = false)
@@ -50,16 +57,19 @@ public class OrderModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "table_id")
+    @JsonIgnore
     private TableModel table;
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference("order-productOrders")
+    @JsonIgnore
     private List<ProductOrderModel> productOrders = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference("order-employees")
+    @JsonIgnore
     private List<OrderEmployeeModel> ordersEmployee = new ArrayList<>();
 
     @Column(nullable = false)

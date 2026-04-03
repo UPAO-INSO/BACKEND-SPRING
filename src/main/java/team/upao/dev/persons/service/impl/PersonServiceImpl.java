@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
-import team.upao.dev.exceptions.NotFoundException;
+import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.persons.dto.PersonRequestDto;
 import team.upao.dev.persons.dto.PersonResponseDto;
 import team.upao.dev.persons.mapper.IPersonMapper;
@@ -30,7 +30,11 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonResponseDto findById(Long id) {
-        return null;
+        PersonModel personModel = this.personRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Person not found with id: " + id));
+
+        return personMapper.toDto(personModel);
     }
 
     @Override
@@ -50,8 +54,9 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public PersonResponseDto findByFullName(String name, String lastname) {
-        PersonModel person = personRepository.findByNameAndLastnameContaining(name, lastname)
-                .orElseThrow(() -> new NotFoundException("Person not found with full name: " + name + " " + lastname));
+        PersonModel person = personRepository
+                .findByNameAndLastnameContaining(name, lastname)
+                .orElseThrow(() -> new ResourceNotFoundException("Person not found with full name: " + name + " " + lastname));
 
         return personMapper.toDto(person);
     }

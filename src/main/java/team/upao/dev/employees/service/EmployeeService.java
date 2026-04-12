@@ -1,4 +1,4 @@
-package team.upao.dev.employees.services;
+package team.upao.dev.employees.service;
 
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;

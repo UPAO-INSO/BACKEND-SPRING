@@ -1,6 +1,7 @@
 package team.upao.dev.orders.service;
 
 import org.springframework.lang.NonNull;
+import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.orders.dto.ChangeOrderStatusDto;
@@ -34,4 +35,7 @@ public interface OrderService {
 
     // Delete
     String delete(UUID id);
+
+    @Transactional
+    void deductInventoryForOrder(OrderModel order);
 }

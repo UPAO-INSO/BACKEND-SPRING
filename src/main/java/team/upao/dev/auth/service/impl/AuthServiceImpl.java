@@ -17,7 +17,7 @@ import team.upao.dev.auth.repository.ITokenRepository;
 import team.upao.dev.auth.service.AuthService;
 import team.upao.dev.auth.jwt.JwtService;
 import team.upao.dev.employees.dto.EmployeeRequestDto;
-import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.employees.service.EmployeeService;
 import team.upao.dev.exceptions.DuplicateResourceException;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.jobs.enums.JobEnum;

@@ -77,9 +77,13 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserResponseDto buildUserResponseDto(UserModel userModel) {
-        EmployeeRequestDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
-        JobEnum jobTitle = employee != null ? employee.getJobName() : null;
-
+        JobEnum jobTitle = null;
+        if (userModel.getEmployees() != null && !userModel.getEmployees().isEmpty()) {
+            EmployeeRequestDto employee = employeeService.findById(userModel.getEmployees().get(0).getId());
+            if (employee != null) {
+                jobTitle = employee.getJobName();
+            }
+        }
         PersonByFullName person = userService.findByUsernameWithFullName(userModel.getUsername());
         return userMapper.toDtoWithFullNameAndJobTitle(userModel, person.name(), person.lastname(), jobTitle);
     }
@@ -105,7 +109,7 @@ public class AuthServiceImpl implements AuthService {
 
         this.userService.create(user);
 
-        log.info("Creating user: {}", user.toString());
+        log.info("Creating user with username: {}", user.getUsername());
 
         JobModel job = jobService.findByTitle(request.getJobTitle());
         Double salary = jobService.getSalaryByJobTitle(job);

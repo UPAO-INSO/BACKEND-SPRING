@@ -158,7 +158,7 @@ public class OrderServiceImpl implements OrderService {
             );
         }
         
-        log.info("Validación de stock completada exitosamente");;
+        log.info("Validación de stock completada exitosamente");
     }
 
     @Override
@@ -634,17 +634,12 @@ public class OrderServiceImpl implements OrderService {
         OrderStatus newStatus = changeOrderStatusDto.getStatus();
 
         if (newStatus.equals(OrderStatus.READY)) {
-            order.setOrderStatus(newStatus);
             this.allServeProductOrders(order.getId());
-        }
-        else if (newStatus.equals(OrderStatus.PAID)) {
-            order.setOrderStatus(newStatus);
+        } else if (newStatus.equals(OrderStatus.PAID)) {
             order.setPaid(true);
             order.setPaidAt(Instant.now());
             tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
-            return orderMapper.toDto(orderRepository.save(order));
         } else if (newStatus.equals(OrderStatus.COMPLETED)) {
-            // Ya no descontamos aquí - se descuenta al crear la orden
             tableService.changeStatus(order.getTable().getId(), TableStatus.AVAILABLE);
         }
 
@@ -656,8 +651,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public String delete(UUID id) {
         this.findModelById(id);
-//        orderRepository.deleteById(id);
-
+        orderRepository.deleteById(id);
         return "Deleted order with id: " + id;
     }
 

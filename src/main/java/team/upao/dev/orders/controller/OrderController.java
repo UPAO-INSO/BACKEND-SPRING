@@ -23,7 +23,8 @@ public class OrderController {
 
     @PostMapping("/create")
     public ResponseEntity<OrderResponseDto> create(@RequestBody @Valid OrderRequestDto order) {
-        return ResponseEntity.ok(orderService.create(order));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(orderService.create(order));
     }
 
     @PatchMapping("/product-orders/serve")

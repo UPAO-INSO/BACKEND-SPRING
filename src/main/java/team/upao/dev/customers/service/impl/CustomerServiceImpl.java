@@ -104,6 +104,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public String delete(Long id) {
+        CustomerModel customer = findModelById(id);
+        customerRepository.delete(customer);
         return "Client with id " + id + " deleted successfully";
     }
 

@@ -147,7 +147,7 @@ public class InventoryServiceImpl implements InventoryService {
     @Override
     @Transactional(readOnly = true)
     public PaginationResponseDto<InventoryResponseDto> findOutOfStockItems(PaginationRequestDto requestDto) {
-        log.error("Buscando ítems AGOTADOS - page={}", requestDto.getPage());
+        log.info("Buscando ítems agotados - page={}", requestDto.getPage());
         
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         
@@ -371,7 +371,7 @@ public class InventoryServiceImpl implements InventoryService {
             InventoryModel inventory = findModelById(inventoryId);
             
             if (!unit.isCompatible(inventory.getUnitOfMeasure())) {
-                log.warn("nidades incompatibles - asumiendo sin stock");
+                log.warn("Unidades incompatibles - asumiendo sin stock");
                 return false;
             }
             

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.common.utils.PaginationUtils;
@@ -24,53 +25,62 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     private final ProductOrderMapper productOrderMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public PaginationResponseDto<ProductOrderResponseDto> findAll(PaginationRequestDto requestDto) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<ProductOrderModel> entities = productOrderRepository.findAll(pageable);
-        final List<ProductOrderResponseDto> productOrderRequestDtos = productOrderMapper.toDto(entities.getContent());
+        final List<ProductOrderResponseDto> dtos = productOrderMapper.toDto(entities.getContent());
         return new PaginationResponseDto<>(
-                productOrderRequestDtos,
+                dtos,
                 entities.getTotalPages(),
                 entities.getTotalElements(),
                 entities.getSize(),
-                entities.getNumber()+1,
+                entities.getNumber() + 1,
                 entities.isEmpty()
         );
     }
 
     @Override
+    @Transactional
     public ProductOrderResponseDto create(ProductOrderRequestDto productOrder) {
-        ProductOrderModel productOrderModel = productOrderMapper.toModel(productOrder);
-        return productOrderMapper.toDto(productOrderModel);
+        ProductOrderModel model = productOrderMapper.toModel(productOrder);
+        return productOrderMapper.toDto(productOrderRepository.save(model));
     }
 
     @Override
-    public ProductOrderResponseDto update(Long id, ProductOrderRequestDto productOrderRequestDto) {
-        return null;
+    @Transactional
+    public ProductOrderResponseDto update(Long id, ProductOrderRequestDto dto) {
+        ProductOrderModel existing = findModelById(id);
+        if (dto.getQuantity() != null) existing.setQuantity(dto.getQuantity());
+        if (dto.getUnitPrice() != null) existing.setUnitPrice(dto.getUnitPrice());
+        if (dto.getSubtotal() != null) existing.setSubtotal(dto.getSubtotal());
+        return productOrderMapper.toDto(productOrderRepository.save(existing));
     }
 
     @Override
-    public ProductOrderResponseDto partialUpdate(Long aLong, ProductOrderResponseDto dto) {
-        return null;
+    public ProductOrderResponseDto partialUpdate(Long id, ProductOrderResponseDto dto) {
+        throw new UnsupportedOperationException("Use update() instead");
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductOrderResponseDto findById(Long id) {
-        ProductOrderModel productOrderModel = this.findModelById(id);
-
-        return productOrderMapper.toDto(productOrderModel);
+        return productOrderMapper.toDto(findModelById(id));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProductOrderModel findModelById(Long id) {
-        return this.productOrderRepository
+        return productOrderRepository
                 .findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product Order with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("ProductOrder not found with id: " + id));
     }
 
     @Override
+    @Transactional
     public String delete(Long id) {
-        this.findById(id);
-        return String.format("Delete Product Order with id: %s", id);
+        ProductOrderModel model = findModelById(id);
+        productOrderRepository.delete(model);
+        return String.format("Deleted ProductOrder with id: %s", id);
     }
 }

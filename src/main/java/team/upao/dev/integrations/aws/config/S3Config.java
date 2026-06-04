@@ -47,4 +47,17 @@ public class S3Config {
                 .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
                 .build();
     }
+
+    /**
+     * S3Presigner para generar URLs presignadas
+     */
+    @Bean
+    public software.amazon.awssdk.services.s3.presigner.S3Presigner s3Presigner() {
+        AwsBasicCredentials awsBasicCredentials = AwsBasicCredentials.create(awsAccessKey, awsSecretKey);
+
+        return software.amazon.awssdk.services.s3.presigner.S3Presigner.builder()
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(awsBasicCredentials))
+                .build();
+    }
 }

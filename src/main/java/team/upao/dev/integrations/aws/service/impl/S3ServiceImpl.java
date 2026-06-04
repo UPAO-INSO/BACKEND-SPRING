@@ -8,7 +8,13 @@ import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Bucket;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
+import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import team.upao.dev.integrations.aws.service.S3Service;
 
 import java.io.IOException;
@@ -27,6 +33,7 @@ public class S3ServiceImpl implements S3Service {
     private String bucketName;
 
     private final S3Client s3Client;
+    private final S3Presigner s3Presigner;
 
     @Override
     public String createBucket(String bucketName) {
@@ -76,11 +83,44 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public String generatePresignedUrl(String bucketName, String fileName, Duration expiration) {
-        return "";
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(expiration)
+                .getObjectRequest(builder -> builder.bucket(bucketName).key(fileName))
+                .build();
+
+        PresignedGetObjectRequest presignedRequest = s3Presigner.presignGetObject(presignRequest);
+        return presignedRequest.url().toString();
     }
 
     @Override
     public String generatePresignedDownloadUrl(String bucketName, String fileName, Duration expiration) {
-        return "";
+        return generatePresignedUrl(bucketName, fileName, expiration);
+    }
+
+    @Override
+    public List<String> listObjectKeys(String prefix) {
+        List<String> keys = new java.util.ArrayList<>();
+        String continuationToken = null;
+
+        do {
+            ListObjectsV2Request.Builder builder = ListObjectsV2Request.builder()
+                    .bucket(bucketName)
+                    .prefix(prefix);
+
+            if (continuationToken != null) {
+                builder.continuationToken(continuationToken);
+            }
+
+            ListObjectsV2Response response = s3Client.listObjectsV2(builder.build());
+
+            response.contents().stream()
+                    .map(S3Object::key)
+                    .forEach(keys::add);
+
+            continuationToken = response.isTruncated() ? response.nextContinuationToken() : null;
+
+        } while (continuationToken != null);
+
+        return keys;
     }
 }

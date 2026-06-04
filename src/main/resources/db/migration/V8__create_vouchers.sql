@@ -1,11 +1,14 @@
-CREATE TABLE IF NOT EXISTS `vouchers`
+CREATE TYPE voucher_type AS ENUM ('INVOICE', 'RECEIPT');
+CREATE TYPE currency_code AS ENUM ('PEN');
+
+CREATE TABLE IF NOT EXISTS vouchers
 (
-    id             BIGINT                      NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id             BIGINT                      PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     series         VARCHAR(100)                NOT NULL,
     number         VARCHAR(100)                NOT NULL,
-    voucher_type   ENUM ('INVOICE', 'RECEIPT') NOT NULL,
+    voucher_type   voucher_type                NOT NULL,
     issued_at      TIMESTAMP                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    currency       ENUM ('PEN')                NOT NULL DEFAULT 'PEN',
+    currency       currency_code               NOT NULL DEFAULT 'PEN',
     igv_percentage DECIMAL(5, 2)               NOT NULL DEFAULT 18.00,
     total_gravada  DECIMAL(19, 2)              NOT NULL,
     total_igv      DECIMAL(19, 2)              NOT NULL,
@@ -17,8 +20,5 @@ CREATE TABLE IF NOT EXISTS `vouchers`
     bar_code       VARCHAR(1000)               NOT NULL,
     payment_id     BIGINT                      NULL UNIQUE,
 
-    CONSTRAINT fk_vouchers_payment FOREIGN KEY (payment_id) REFERENCES payments (id)
-        ON DELETE RESTRICT ON UPDATE CASCADE
-) ENGINE = InnoDB
-  DEFAULT CHARSET = utf8mb4
-  COLLATE = utf8mb4_unicode_ci;
+    CONSTRAINT fk_vouchers_payment FOREIGN KEY (payment_id) REFERENCES payments (id) ON DELETE RESTRICT ON UPDATE CASCADE
+);

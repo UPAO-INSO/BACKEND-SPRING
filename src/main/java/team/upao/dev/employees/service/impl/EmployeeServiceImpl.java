@@ -91,6 +91,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public String delete(Long id) {
+        EmployeeModel employee = findModelById(id);
+        employeeRepository.delete(employee);
         return "Employee with ID " + id + " deleted successfully.";
     }
 }

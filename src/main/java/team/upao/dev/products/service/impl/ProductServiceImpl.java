@@ -37,7 +37,9 @@ import team.upao.dev.products.repository.IProductRepository;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.products.service.ProductTypeService;
 import team.upao.dev.integrations.aws.service.S3Service;
+import team.upao.dev.websocket.dto.WsProductEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Service
 @Slf4j
@@ -49,6 +51,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductInventoryService productInventoryService;
     private final InventoryService inventoryService;
     private final S3Service s3Service;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${cloud.aws.s3.bucket-name}")
     private String bucketName;
@@ -455,13 +458,26 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void updateAvailableById(Long id, Boolean available) {
-        this.findById(id);
+        ProductResponseDto product = this.findById(id);
 
         if (available == null) {
             throw new IllegalArgumentException("Available status cannot be null");
         }
 
         this.productRepository.updateAvailableById(id, available);
+
+        // Notificar en tiempo real
+        try {
+            WsProductEvent event = WsProductEvent.builder()
+                    .type("PRODUCT_AVAILABILITY")
+                    .productId(id)
+                    .productName(product.getName())
+                    .available(available)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/products", event);
+        } catch (Exception e) {
+            log.warn("No se pudo publicar evento WS de producto: {}", e.getMessage());
+        }
     }
 
     @Override

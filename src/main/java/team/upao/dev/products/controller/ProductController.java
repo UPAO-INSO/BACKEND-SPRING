@@ -12,6 +12,7 @@ import team.upao.dev.products.dto.ProductResponseDto;
 import team.upao.dev.products.service.ProductService;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -42,5 +43,19 @@ public class ProductController extends BaseController<ProductRequestDto, Product
     @GetMapping("/by-product-type/{productTypeId}")
     public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(@PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
         return ResponseEntity.ok(productService.findAllByProductTypeId(productTypeId, requestDto));
+    }
+
+    /**
+     * Sincroniza las imágenes de productos con S3.
+     * Lista los objetos bajo "products/" en el bucket, actualiza imageUrl en la BD
+     * para cada producto cuyo slug coincida con un archivo en S3.
+     */
+    @PostMapping("/sync-images")
+    public ResponseEntity<Map<String, Object>> syncImagesFromS3() {
+        int updated = productService.syncImagesFromS3();
+        return ResponseEntity.ok(Map.of(
+                "message", "Sincronización completada",
+                "updatedProducts", updated
+        ));
     }
 }

@@ -1,4 +1,4 @@
-package team.upao.dev.employees.controllers;
+package team.upao.dev.employees.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
 import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.employees.dto.EmployeeRequestDto;
-import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.employees.service.EmployeeService;
 
 @RestController
 @RequestMapping("employees")

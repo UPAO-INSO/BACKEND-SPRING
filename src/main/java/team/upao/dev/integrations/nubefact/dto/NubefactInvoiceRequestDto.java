@@ -21,6 +21,7 @@ public class NubefactInvoiceRequestDto {
     @JsonProperty("tipo_de_comprobante")
     @NotNull
     @JsonSetter(nulls = Nulls.SKIP)
+    @Builder.Default
     private Integer tipoDeComprobante = 1;
     @NotBlank
     private String serie;
@@ -32,6 +33,7 @@ public class NubefactInvoiceRequestDto {
     @JsonProperty("cliente_tipo_de_documento")
     @NotNull
     @JsonSetter(nulls = Nulls.SKIP)
+    @Builder.Default
     private Integer clienteTipoDeDocumento = 6;
     @JsonProperty("cliente_numero_de_documento")
     @NotBlank
@@ -60,6 +62,7 @@ public class NubefactInvoiceRequestDto {
     private String fechaDeVencimiento; // Optional
     @NotNull
     @JsonSetter(nulls = Nulls.SKIP)
+    @Builder.Default
     private Integer moneda = 1;
     @JsonProperty("tipo_de_cambio")
     private String tipoDeCambio; // Optional

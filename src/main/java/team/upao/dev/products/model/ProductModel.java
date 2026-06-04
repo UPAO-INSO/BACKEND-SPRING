@@ -40,6 +40,9 @@ public class ProductModel {
     @Builder.Default
     private Boolean available = true;
 
+    @Column
+    private String imageUrl;
+
     @ManyToOne
     @JoinColumn(name = "product_type_id", nullable = false)
     private ProductTypeModel productType;
@@ -50,6 +53,6 @@ public class ProductModel {
 
     // Relación con la tabla ProductInventoryModel
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Builder.Default
     private List<ProductInventoryModel> productInventory = new ArrayList<>();
-
 }

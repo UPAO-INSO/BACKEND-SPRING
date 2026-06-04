@@ -1,27 +1,28 @@
 package team.upao.dev.products.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.util.UUID;
 
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 public class ProductOrderResponseDto {
     private Long id;
 
-    @NotBlank
+    @NotNull
     private Integer quantity;
 
-    @NotBlank
+    @NotNull
     private Integer servedQuantity;
 
-    @NotBlank
+    @NotNull
     private Double unitPrice;
 
-    @NotBlank
+    @NotNull
     private Double subtotal;
 
     private String status;

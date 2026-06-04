@@ -1,4 +1,4 @@
-package team.upao.dev.employees.services.impl;
+package team.upao.dev.employees.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.mapper.EmployeeMapper;
 import team.upao.dev.employees.model.EmployeeModel;
 import team.upao.dev.employees.repository.IEmployeeRepository;
-import team.upao.dev.employees.services.EmployeeService;
+import team.upao.dev.employees.service.EmployeeService;
 import team.upao.dev.exceptions.ResourceNotFoundException;
 import team.upao.dev.jobs.service.JobService;
 import team.upao.dev.users.service.UserService;
@@ -91,6 +91,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public String delete(Long id) {
+        EmployeeModel employee = findModelById(id);
+        employeeRepository.delete(employee);
         return "Employee with ID " + id + " deleted successfully.";
     }
 }

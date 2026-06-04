@@ -23,7 +23,7 @@ import java.util.List;
 @Entity
 @Builder
 @Table(
-        name = "user",
+        name = "\"user\"",
         indexes = {
                 @Index(name = "idx_user_email", columnList = "email"),
                 @Index(name = "idx_user_username", columnList = "username")

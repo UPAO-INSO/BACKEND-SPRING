@@ -19,4 +19,5 @@ public class ProductResponseDto {
     private String productTypeName;
     private Boolean active;
     private Boolean available;
+    private String imageUrl;
 }

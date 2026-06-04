@@ -19,7 +19,8 @@ public class PaymentController {
 
     @PostMapping
     public ResponseEntity<PaymentResponseDto> create(@RequestBody @Valid PaymentRequestDto paymentRequestDto) {
-        return ResponseEntity.ok(paymentService.create(paymentRequestDto));
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED)
+                .body(paymentService.create(paymentRequestDto));
     }
 
     @GetMapping
@@ -41,6 +42,6 @@ public class PaymentController {
 
     @DeleteMapping("{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
-        return ResponseEntity.ok("Payment was deleted");
+        return ResponseEntity.ok(paymentService.delete(id));
     }
 }

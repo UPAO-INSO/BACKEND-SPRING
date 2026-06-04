@@ -134,7 +134,8 @@ public class ProductTypeServiceImpl implements ProductTypeService {
     @Override
     @Transactional
     public String delete(Long id) {
-        this.findById(id);
+        ProductTypeModel productType = findModelById(id);
+        productTypeRepository.delete(productType);
         return "Product type with id " + id + " deleted successfully.";
     }
 }

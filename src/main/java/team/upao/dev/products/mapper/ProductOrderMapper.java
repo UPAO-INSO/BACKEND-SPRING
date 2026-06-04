@@ -13,10 +13,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductOrderMapper {
     public ProductOrderModel toModel(ProductOrderRequestDto productOrderRequestDto) {
+        Double unitPrice = productOrderRequestDto.getUnitPrice();
+        Integer quantity = productOrderRequestDto.getQuantity();
+        Double subtotal = (unitPrice != null && quantity != null)
+                ? quantity.doubleValue() * unitPrice
+                : (productOrderRequestDto.getSubtotal() != null ? productOrderRequestDto.getSubtotal() : 0.0);
+
         return ProductOrderModel.builder()
-                .quantity(productOrderRequestDto.getQuantity())
-                .unitPrice(productOrderRequestDto.getUnitPrice())
-                .subtotal(productOrderRequestDto.getQuantity() * productOrderRequestDto.getUnitPrice())
+                .quantity(quantity)
+                .unitPrice(unitPrice)
+                .subtotal(subtotal)
                 .order(null)
                 .product(null)
                 .build();
@@ -32,10 +38,12 @@ public class ProductOrderMapper {
         return ProductOrderResponseDto.builder()
                 .id(productOrderModel.getId())
                 .quantity(productOrderModel.getQuantity())
-                .servedQuantity(productOrderModel.getServedQuantity() != null ? productOrderModel.getServedQuantity() : 0)
+                .servedQuantity(
+                        productOrderModel.getServedQuantity() != null ? productOrderModel.getServedQuantity() : 0)
                 .unitPrice(productOrderModel.getUnitPrice())
                 .subtotal(productOrderModel.getSubtotal())
-                .status(productOrderModel.getStatus() != null ? productOrderModel.getStatus().name() : OrderStatus.PENDING.name())
+                .status(productOrderModel.getStatus() != null ? productOrderModel.getStatus().name()
+                        : OrderStatus.PENDING.name())
                 .orderId(productOrderModel.getOrder().getId())
                 .productId(productOrderModel.getProduct().getId())
                 .productName(productOrderModel.getProduct().getName())

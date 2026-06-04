@@ -14,13 +14,12 @@ import java.util.Optional;
 
 @Repository
 public interface IProductTypeRepository extends JpaRepository<ProductTypeModel, Long> {
-    @NonNull
-    Page<ProductTypeModel> findAll(@NonNull Pageable pageable);
+
+    Page<ProductTypeModel> findAll(Pageable pageable);
     Optional<ProductTypeModel> findByName(String nameType);
     boolean existsByName(String nameType);
 
     @Modifying(clearAutomatically = true)
     @Query("update ProductTypeModel pt set pt.name=:name where pt.id=:id")
-    @NonNull
     void updateNameById(@Param(value = "id") Long id, @Param(value = "name") String name);
 }

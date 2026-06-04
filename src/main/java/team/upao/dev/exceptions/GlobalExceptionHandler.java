@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import software.amazon.awssdk.services.s3.model.S3Exception;
+
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -75,6 +77,11 @@ public class GlobalExceptionHandler {
         // Recordar cambiar el mensaje de error para no ser específico
         // return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno en el servidor.", request.getDescription(false)));
         return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno: " + ex.getMessage(), request.getDescription(false)));
+    }
+
+    @ExceptionHandler(S3Exception.class)
+    public ResponseEntity<ApiError> handleS3Exception(S3Exception ex, WebRequest request) {
+        return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request.getDescription(false)));
     }
 
     private String buildHttpMessageNotReadableMessage(HttpMessageNotReadableException ex) {

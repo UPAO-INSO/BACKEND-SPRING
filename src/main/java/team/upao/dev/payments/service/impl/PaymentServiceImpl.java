@@ -123,18 +123,25 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public PaymentResponseDto update(Long id, PaymentRequestDto paymentResponseDto) {
-        return null;
+    @Transactional
+    public PaymentResponseDto update(Long id, PaymentRequestDto dto) {
+        PaymentModel existing = findModelById(id);
+        if (dto.getAmount() != null) existing.setAmount(dto.getAmount());
+        if (dto.getProvider() != null) existing.setProvider(dto.getProvider());
+        return paymentMapper.toDto(paymentRepository.save(existing));
     }
 
     @Override
+    @Transactional
     public PaymentResponseDto update(PaymentModel paymentModel) {
-        PaymentModel saved = paymentRepository.save(paymentModel);
-        return paymentMapper.toDto(saved);
+        return paymentMapper.toDto(paymentRepository.save(paymentModel));
     }
 
     @Override
+    @Transactional
     public String delete(Long id) {
-        return "";
+        PaymentModel payment = findModelById(id);
+        paymentRepository.delete(payment);
+        return "Payment with id " + id + " deleted successfully";
     }
 }

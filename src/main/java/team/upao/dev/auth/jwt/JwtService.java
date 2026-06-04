@@ -102,15 +102,16 @@ public class JwtService {
     }
 
     private Claims extractAllClaims(String token) {
-        Claims claims;
-
-        claims = Jwts.parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims;
+        try {
+            return Jwts.parser()
+                    .verifyWith(getSignInKey())
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (Exception e) {
+            log.debug("Token inválido o expirado: {}", e.getMessage());
+            return null;
+        }
     }
 
     public <T> T getClaim(String token, Function<Claims, T> claimsResolver) {
@@ -119,11 +120,15 @@ public class JwtService {
     }
 
     private Date getExpiration(String token) {
-        return getClaim(token, Claims::getExpiration);
+        Claims claims = extractAllClaims(token);
+        if (claims == null) return null;
+        return claims.getExpiration();
     }
 
     private boolean isTokenExpired(String token) {
-        return !getExpiration(token).before(new Date());
+        Date expiration = getExpiration(token);
+        if (expiration == null) return true;
+        return expiration.before(new Date());
     }
 
     public String extractUsername(String token) {

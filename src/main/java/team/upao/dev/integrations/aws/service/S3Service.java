@@ -20,4 +20,7 @@ public interface S3Service {
     String generatePresignedUrl(String bucketName, String fileName, Duration expiration);
 
     String generatePresignedDownloadUrl(String bucketName, String fileName, Duration expiration);
+
+    /** Lista las claves (keys) de objetos bajo un prefijo dado. */
+    List<String> listObjectKeys(String prefix);
 }

@@ -36,6 +36,8 @@ import team.upao.dev.products.model.ProductTypeModel;
 import team.upao.dev.products.repository.IProductRepository;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.products.service.ProductTypeService;
+import team.upao.dev.integrations.aws.service.S3Service;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Slf4j
@@ -46,6 +48,13 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductInventoryService productInventoryService;
     private final InventoryService inventoryService;
+    private final S3Service s3Service;
+
+    @Value("${cloud.aws.s3.bucket-name}")
+    private String bucketName;
+
+    @Value("${cloud.aws.region.static}")
+    private String region;
 
     @Override
     public List<ProductResponseDto> findByIds(List<Long> ids) {
@@ -57,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
 
         return productMapper.toDto(products)
                 .stream()
-                .filter(p -> p.getActive() == true)
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .toList();
     }
 
@@ -67,7 +76,7 @@ public class ProductServiceImpl implements ProductService {
         final Page<ProductModel> entities = productRepository.findAll(pageable);
         final List<ProductResponseDto> productResponseDtos = productMapper.toDto(entities.getContent())
                 .stream()
-                .filter(p -> p.getActive() == true)
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .toList();
         return new PaginationResponseDto<>(
                 productResponseDtos,
@@ -84,7 +93,7 @@ public class ProductServiceImpl implements ProductService {
         final Page<ProductModel> entities = productRepository.findAllByProductTypeId(productTypeId, pageable);
         final List<ProductResponseDto> productResponseDtos = productMapper.toDto(entities.getContent())
                 .stream()
-                .filter(p -> p.getActive() == true)
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .toList();
         return new PaginationResponseDto<>(
                 productResponseDtos,
@@ -99,7 +108,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponseDto findByName(String name) {
         ProductModel product = productRepository
-                .findByNameIgnoreCase(name).stream().filter(p -> p.getActive() == true)
+                .findByNameIgnoreCase(name).stream().filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with name: " + name));
 
@@ -114,7 +123,7 @@ public class ProductServiceImpl implements ProductService {
 
         return productMapper.toDto(products)
                 .stream()
-                .filter(p -> p.getActive() == true)
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
                 .toList();
     }
 
@@ -471,11 +480,65 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public String delete(Long id) {
         ProductModel product = this.findModelById(id);
-
         product.setActive(false);
-
         productRepository.save(product);
-
         return "Product with id " + id + " has been marked as unavailable.";
+    }
+
+    @Override
+    @Transactional
+    public int syncImagesFromS3() {
+        log.info("Iniciando sincronización de imágenes de productos con S3...");
+
+        // 1. Listar todos los objetos bajo el prefijo "products/"
+        List<String> s3Keys = s3Service.listObjectKeys("products/");
+        log.info("Objetos encontrados en S3 bajo 'products/': {}", s3Keys.size());
+
+        // Construir un Set con solo los nombres de archivo (sin el prefijo)
+        java.util.Set<String> s3FileNames = s3Keys.stream()
+                .map(key -> key.replace("products/", "").toLowerCase())
+                .collect(java.util.stream.Collectors.toSet());
+
+        log.debug("Archivos en S3: {}", s3FileNames);
+
+        // 2. Obtener todos los productos activos
+        List<ProductModel> products = productRepository.findAll();
+        int updated = 0;
+
+        for (ProductModel product : products) {
+            String slug = slugify(product.getName());
+            String expectedFileName = slug + ".webp";
+
+            if (s3FileNames.contains(expectedFileName)) {
+                String newImageUrl = String.format(
+                        "https://%s.s3.%s.amazonaws.com/products/%s",
+                        bucketName, region, expectedFileName);
+
+                if (!newImageUrl.equals(product.getImageUrl())) {
+                    product.setImageUrl(newImageUrl);
+                    productRepository.save(product);
+                    updated++;
+                    log.info("Imagen actualizada: '{}' → {}", product.getName(), newImageUrl);
+                }
+            } else {
+                log.debug("Sin imagen en S3 para: '{}' (buscado: {})", product.getName(), expectedFileName);
+            }
+        }
+
+        log.info("Sincronización completada. {} producto(s) actualizados.", updated);
+        return updated;
+    }
+
+    private String slugify(String name) {
+        if (name == null) return "placeholder";
+        return name.toLowerCase()
+                .trim()
+                .replaceAll("[áàäâ]", "a")
+                .replaceAll("[éèëê]", "e")
+                .replaceAll("[íìïî]", "i")
+                .replaceAll("[óòöô]", "o")
+                .replaceAll("[úùüû]", "u")
+                .replaceAll("[^a-z0-9ñ]+", "-")
+                .replaceAll("^-+|-+$", "");
     }
 }

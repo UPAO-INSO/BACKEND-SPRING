@@ -18,6 +18,7 @@ import team.upao.dev.tables.repository.ITableRepository;
 import team.upao.dev.tables.service.TableService;
 
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class TableServiceImpl implements TableService {
     private final TableMapper tableMapper;
 
     @Override
+    @Transactional(readOnly = true)
     public PaginationResponseDto<TableModel> findAll(PaginationRequestDto requestDto, TableStatus status) {
         final Pageable pageable = PaginationUtils.getPageable(requestDto);
         final Page<TableModel> entities;
@@ -49,6 +51,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TableModel findById(Long id) {
         return tableRepository
                 .findById(id)
@@ -56,6 +59,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TableModel findByNumber(String number) {
         return tableRepository
                 .findByNumber(number)
@@ -68,6 +72,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    @Transactional
     public TableModel create(TableDto table) {
         if(existsByNumber(table.getNumber())) {
             throw new DuplicateResourceException("Table already exists with number: " + table.getNumber());
@@ -81,6 +86,7 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    @Transactional
     public TableModel update(Long id, TableDto table) {
         TableModel tableExisting = findById(id);
 
@@ -92,12 +98,15 @@ public class TableServiceImpl implements TableService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public String delete(Long id) {
-        this.findById(id);
+        TableModel table = this.findById(id);
+        tableRepository.delete(table);
         return String.format("Table deleted with id: %s", id);
     }
 
     @Override
+    @Transactional
     public TableModel changeStatus(Long id, TableStatus status) {
         TableModel table = findById(id);
 

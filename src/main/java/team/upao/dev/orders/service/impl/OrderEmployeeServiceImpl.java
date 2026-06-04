@@ -63,7 +63,11 @@ public class OrderEmployeeServiceImpl implements OrderEmployeeService {
     }
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public void delete(Long id) {
-        this.findById(id);
+        OrderEmployeeModel entity = orderEmployeeRepository
+                .findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("OrderEmployee not found with id: " + id));
+        orderEmployeeRepository.delete(entity);
     }
 }

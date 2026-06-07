@@ -85,6 +85,12 @@ public class ProductMapper {
     }
 
     public ProductResponseDto toDto(ProductModel product) {
+        // Stock directo desde el FK inventory_id (solo para bebidas/descartables)
+        java.math.BigDecimal stock = null;
+        if (product.getInventoryItem() != null) {
+            stock = product.getInventoryItem().getQuantity();
+        }
+
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -95,6 +101,7 @@ public class ProductMapper {
                 .active(product.getActive())
                 .available(product.getAvailable())
                 .imageUrl(buildImageUrl(product))
+                .stock(stock)
                 .build();
     }
 

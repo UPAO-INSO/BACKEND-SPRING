@@ -37,7 +37,11 @@ import team.upao.dev.products.repository.IProductRepository;
 import team.upao.dev.products.service.ProductService;
 import team.upao.dev.products.service.ProductTypeService;
 import team.upao.dev.integrations.aws.service.S3Service;
+import team.upao.dev.inventory.model.InventoryModel;
+import team.upao.dev.inventory.repository.IInventoryRepository;
+import team.upao.dev.websocket.dto.WsProductEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Service
 @Slf4j
@@ -49,6 +53,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductInventoryService productInventoryService;
     private final InventoryService inventoryService;
     private final S3Service s3Service;
+    private final IInventoryRepository inventoryRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Value("${cloud.aws.s3.bucket-name}")
     private String bucketName;
@@ -182,7 +188,7 @@ public class ProductServiceImpl implements ProductService {
             
             InventoryResponseDto inventoryCreated = inventoryService.create(inventoryRequest);
             log.info("Inventory item created with ID: {}", inventoryCreated.getId());
-            
+
             // Crear la relación producto-inventario con cantidad 1 (se descuenta 1 por cada venta)
             ProductInventoryRequestDto relationRequest = ProductInventoryRequestDto.builder()
                     .productId(productModel.getId())
@@ -190,9 +196,16 @@ public class ProductServiceImpl implements ProductService {
                     .quantity(java.math.BigDecimal.ONE)
                     .unitOfMeasure(UnitOfMeasure.UNIDAD)
                     .build();
-            
+
             productInventoryService.createProductInventory(relationRequest);
             log.info("Product-Inventory relation created for product: {}", productModel.getId());
+
+            // Vincular directamente el inventoryItem en el producto (elimina lookup por nombre)
+            InventoryModel inventoryModel = inventoryRepository.findById(inventoryCreated.getId()).orElse(null);
+            if (inventoryModel != null) {
+                productModel.setInventoryItem(inventoryModel);
+                productRepository.save(productModel);
+            }
             
         } else if (product.getRecipe() != null && !product.getRecipe().isEmpty()) {
             // Para platos (ENTRADAS, SEGUNDOS, CARTA), crear receta con ingredientes
@@ -258,10 +271,11 @@ public class ProductServiceImpl implements ProductService {
             if (wasBeverageOrDisposable && willBePlato) {
                 // De bebida/descartable a plato: eliminar inventario asociado
                 log.info("Changing from beverage/disposable to dish - removing inventory association");
+                // Limpiar el vínculo directo inventory_id del producto
+                productExisting.setInventoryItem(null);
                 for (ProductInventoryResponseDto existing : existingRecipeList) {
                     productInventoryService.deleteProductInventory(existing.getId());
-                    // También eliminar el inventory si tiene el mismo nombre del producto
-                    if (existing.getInventoryName() != null && 
+                    if (existing.getInventoryName() != null &&
                         existing.getInventoryName().equalsIgnoreCase(productExisting.getName())) {
                         try {
                             inventoryService.delete(existing.getInventoryId());
@@ -297,7 +311,13 @@ public class ProductServiceImpl implements ProductService {
                         .build();
                 productInventoryService.createProductInventory(piRequest);
                 log.info("Created inventory {} and product_inventory for product {}", createdInventory.getId(), id);
-                
+
+                // Vincular el inventoryItem directamente en el producto
+                InventoryModel newInvModel = inventoryRepository.findById(createdInventory.getId()).orElse(null);
+                if (newInvModel != null) {
+                    productExisting.setInventoryItem(newInvModel);
+                }
+
                 return productMapper.toDto(productExisting);
             } else if (wasBeverageOrDisposable && willBeBeverageOrDisposable) {
                 // De bebida a descartable o viceversa: actualizar tipo en inventory
@@ -455,13 +475,26 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public void updateAvailableById(Long id, Boolean available) {
-        this.findById(id);
+        ProductResponseDto product = this.findById(id);
 
         if (available == null) {
             throw new IllegalArgumentException("Available status cannot be null");
         }
 
         this.productRepository.updateAvailableById(id, available);
+
+        // Notificar en tiempo real
+        try {
+            WsProductEvent event = WsProductEvent.builder()
+                    .type("PRODUCT_AVAILABILITY")
+                    .productId(id)
+                    .productName(product.getName())
+                    .available(available)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/products", event);
+        } catch (Exception e) {
+            log.warn("No se pudo publicar evento WS de producto: {}", e.getMessage());
+        }
     }
 
     @Override

@@ -20,13 +20,14 @@ import team.upao.dev.users.service.UserService;
 @Slf4j
 @RequiredArgsConstructor
 @RequestMapping("users")
+@PreAuthorize("hasRole('ADMINISTRADOR')")
 @RestController
 public class UserController {
     private final UserService userService;
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UserResponseDto> create(@RequestBody @Valid UserDto user) {
         return ResponseEntity.ok(this.userService.create(user));
     }
@@ -53,25 +54,25 @@ public class UserController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UserResponseDto> update(@PathVariable Long id, @RequestBody @Valid UserDto user) {
         return ResponseEntity.ok(this.userService.update(id, user));
     }
 
     @PatchMapping("/username/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UserResponseDto> updateUsernameById(@PathVariable Long id, @RequestParam String username) {
         return ResponseEntity.ok(this.userService.updateUsernameById(id, username));
     }
 
     @PatchMapping("email/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<UserResponseDto> updateEmailById(@PathVariable Long id, @RequestParam String email) {
         return ResponseEntity.ok(this.userService.updateEmailById(id, email));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Object> delete(@PathVariable Long id) {
         this.userService.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);

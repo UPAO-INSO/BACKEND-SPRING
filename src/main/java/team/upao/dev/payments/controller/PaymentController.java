@@ -2,6 +2,7 @@ package team.upao.dev.payments.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
@@ -13,6 +14,7 @@ import team.upao.dev.payments.service.PaymentService;
 
 import java.util.UUID;
 
+@PreAuthorize("hasAnyRole('CAJERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("payments")

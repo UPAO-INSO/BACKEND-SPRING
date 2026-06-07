@@ -1,6 +1,7 @@
 package team.upao.dev.vouchers.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
@@ -9,6 +10,7 @@ import team.upao.dev.vouchers.dto.VoucherRequestDto;
 import team.upao.dev.vouchers.dto.VoucherResponseDto;
 import team.upao.dev.vouchers.service.VoucherService;
 
+@PreAuthorize("hasAnyRole('CAJERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("vouchers")
 @RequiredArgsConstructor

@@ -11,6 +11,7 @@ import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.jobs.model.JobModel;
 import team.upao.dev.jobs.service.JobService;
 
+@PreAuthorize("hasAnyRole('GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("jobs")
 @Slf4j
@@ -34,13 +35,13 @@ public class JobController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<JobModel> update(@PathVariable Long id, @RequestBody JobModel job) {
         return ResponseEntity.ok(this.jobService.update(id, job));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Object> delete(@PathVariable Long id) {
         this.jobService.delete(id);
         return new ResponseEntity<>(HttpStatus.OK);

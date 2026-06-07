@@ -2,6 +2,7 @@ package team.upao.dev.pensionistas.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.controller.BaseController;
@@ -13,6 +14,7 @@ import team.upao.dev.pensionistas.service.PensionistaService;
 
 import java.util.List;
 
+@PreAuthorize("hasAnyRole('GERENTE','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("pensionistas")

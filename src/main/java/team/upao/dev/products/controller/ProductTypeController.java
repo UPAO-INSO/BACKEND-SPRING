@@ -1,6 +1,7 @@
 package team.upao.dev.products.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.controller.BaseController;
@@ -9,6 +10,7 @@ import team.upao.dev.products.dto.ProductTypeRequestDto;
 import team.upao.dev.products.dto.ProductTypeResponseDto;
 import team.upao.dev.products.service.ProductTypeService;
 
+@PreAuthorize("hasAnyRole('GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("/products-types")
 @RequiredArgsConstructor

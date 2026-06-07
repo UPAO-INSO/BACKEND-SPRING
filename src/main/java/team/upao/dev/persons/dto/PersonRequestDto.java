@@ -16,11 +16,8 @@ public class PersonRequestDto {
     @NotBlank(message = "Name is required")
     private String name;
 
-    @NotBlank(message = "Lastname is required")
     private String lastname;
 
-    @NotBlank(message = "Phone is required")
-    @Size(min =  12, max = 12)
     private String phone;
 
     private Instant createdAt;

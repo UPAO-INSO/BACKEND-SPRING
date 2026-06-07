@@ -40,8 +40,9 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerResponseDto create(CustomerRequestRequestDto clientRequestDto) {
         CustomerModel customerModel = customerMapper.toModel(clientRequestDto);
 
-        DocumentType documentType = this.choiceDocumentType(customerModel.getDocumentNumber());
-        customerModel.setDocumentType(documentType);
+        if (customerModel.getDocumentNumber() != null && !customerModel.getDocumentNumber().isBlank()) {
+            customerModel.setDocumentType(this.choiceDocumentType(customerModel.getDocumentNumber()));
+        }
 
         log.info("Creating customer: {}", customerModel);
 
@@ -133,5 +134,10 @@ public class CustomerServiceImpl implements CustomerService {
                 .findByDocumentNumberContaining(document).stream().toList();
 
         return customerMapper.toDto(client);
+    }
+
+    @Override
+    public List<CustomerResponseDto> searchByName(String name) {
+        return customerMapper.toDto(customerRepository.findByNameContainingIgnoreCase(name));
     }
 }

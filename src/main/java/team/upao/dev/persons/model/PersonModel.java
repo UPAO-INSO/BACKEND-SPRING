@@ -29,10 +29,10 @@ public class PersonModel {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String lastname;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String phone;
 
     @Column(nullable = false, columnDefinition = "BOOLEAN DEFAULT TRUE")

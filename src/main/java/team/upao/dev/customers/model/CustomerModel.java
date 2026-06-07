@@ -21,25 +21,25 @@ import team.upao.dev.persons.model.PersonModel;
         }
 )
 public class CustomerModel extends PersonModel {
-    @Column(nullable = false, length = 200)
+    @Column(nullable = true, length = 200)
     private String email;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private DocumentType documentType;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = true, length = 20)
     private String documentNumber;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String departament;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String province;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String district;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String completeAddress;
 }

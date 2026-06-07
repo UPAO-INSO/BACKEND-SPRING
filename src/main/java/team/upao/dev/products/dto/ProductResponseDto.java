@@ -6,7 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,4 +21,10 @@ public class ProductResponseDto {
     private Boolean active;
     private Boolean available;
     private String imageUrl;
+
+    /**
+     * Stock actual para bebidas y descartables (via FK inventory_id).
+     * NULL para platos (su stock se gestiona por ingredientes).
+     */
+    private java.math.BigDecimal stock;
 }

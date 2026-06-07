@@ -41,7 +41,8 @@ public class ProductController extends BaseController<ProductRequestDto, Product
     }
 
     @GetMapping("/by-product-type/{productTypeId}")
-    public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(@PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
+    public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(
+            @PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
         return ResponseEntity.ok(productService.findAllByProductTypeId(productTypeId, requestDto));
     }
 
@@ -55,7 +56,6 @@ public class ProductController extends BaseController<ProductRequestDto, Product
         int updated = productService.syncImagesFromS3();
         return ResponseEntity.ok(Map.of(
                 "message", "Sincronización completada",
-                "updatedProducts", updated
-        ));
+                "updatedProducts", updated));
     }
 }

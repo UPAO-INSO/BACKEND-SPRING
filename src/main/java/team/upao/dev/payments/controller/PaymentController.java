@@ -11,6 +11,8 @@ import team.upao.dev.payments.dto.PaymentResponseDto;
 import team.upao.dev.payments.enums.PaymentType;
 import team.upao.dev.payments.service.PaymentService;
 
+import java.util.UUID;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("payments")
@@ -43,5 +45,13 @@ public class PaymentController {
     @DeleteMapping("{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         return ResponseEntity.ok(paymentService.delete(id));
+    }
+
+    /** Devuelve el pago asociado a una orden, o 404 si no existe */
+    @GetMapping("by-order/{orderId}")
+    public ResponseEntity<PaymentResponseDto> findByOrderId(@PathVariable UUID orderId) {
+        return paymentService.findByOrderId(orderId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

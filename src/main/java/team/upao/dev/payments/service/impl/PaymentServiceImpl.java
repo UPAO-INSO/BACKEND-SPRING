@@ -97,6 +97,13 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     @Transactional(readOnly = true)
+    public java.util.Optional<PaymentResponseDto> findByOrderId(UUID orderId) {
+        return paymentRepository.findByOrderId(orderId)
+                .map(paymentMapper::toDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public PaginationResponseDto<PaymentResponseDto> findAll(PaginationRequestDto paginationRequestDto, String status, PaymentType paymentType) {
         final Pageable pageable = PaginationUtils.getPageable(paginationRequestDto);
         final Page<PaymentModel> entities;

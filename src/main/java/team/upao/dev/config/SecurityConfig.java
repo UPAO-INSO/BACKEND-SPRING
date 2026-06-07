@@ -79,7 +79,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource(){
         CorsConfiguration configuration= new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://punto-de-sal.netlify.app"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "https://punto-de-sal.netlify.app", "https://punto-de-sal.up.railway.app"));
         configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of(

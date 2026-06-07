@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+@PreAuthorize("hasAnyRole('MESERO','CAJERO','COCINERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("orders")
@@ -82,7 +83,7 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<String> delete(@PathVariable UUID id) {
         return ResponseEntity.ok(orderService.delete(id));
     }

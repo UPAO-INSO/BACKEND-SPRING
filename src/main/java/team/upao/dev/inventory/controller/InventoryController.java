@@ -102,7 +102,7 @@ public class InventoryController {
      * DELETE /inventory/{id}
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         inventoryService.delete(id);
         return ResponseEntity.ok("Item eliminado exitosamente");

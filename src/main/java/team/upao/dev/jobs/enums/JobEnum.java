@@ -5,4 +5,5 @@ public enum JobEnum {
     CAJERO,
     COCINERO,
     MESERO,
+    ADMINISTRADOR,
 }

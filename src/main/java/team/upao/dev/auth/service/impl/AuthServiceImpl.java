@@ -99,11 +99,20 @@ public class AuthServiceImpl implements AuthService {
             throw new DuplicateResourceException("Email already exists");
         }
 
+        JobModel job = jobService.findByTitle(request.getJobTitle());
+        UserRole userRole = switch (job.getTitle()) {
+            case GERENTE       -> UserRole.GERENTE;
+            case CAJERO        -> UserRole.CAJERO;
+            case COCINERO      -> UserRole.COCINERO;
+            case ADMINISTRADOR -> UserRole.ADMINISTRADOR;
+            default            -> UserRole.MESERO;
+        };
+
         UserModel user = UserModel.builder()
                 .username(request.getUsername())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
-                .role(UserRole.USER)
+                .role(userRole)
                 .isActive(true)
                 .build();
 
@@ -111,7 +120,6 @@ public class AuthServiceImpl implements AuthService {
 
         log.info("Creating user with username: {}", user.getUsername());
 
-        JobModel job = jobService.findByTitle(request.getJobTitle());
         Double salary = jobService.getSalaryByJobTitle(job);
 
         EmployeeRequestDto employeeDto = EmployeeRequestDto.builder()

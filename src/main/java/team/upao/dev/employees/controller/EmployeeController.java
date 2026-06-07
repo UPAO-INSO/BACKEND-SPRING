@@ -10,6 +10,7 @@ import team.upao.dev.common.dto.PaginationResponseDto;
 import team.upao.dev.employees.dto.EmployeeRequestDto;
 import team.upao.dev.employees.service.EmployeeService;
 
+@PreAuthorize("hasAnyRole('GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("employees")
 @RequiredArgsConstructor
@@ -32,13 +33,13 @@ public class EmployeeController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<EmployeeRequestDto> update(@PathVariable Long id, @RequestBody @Valid EmployeeRequestDto employee) {
         return ResponseEntity.ok(employeeService.update(id, employee));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         return ResponseEntity.ok(employeeService.delete(id));
     }

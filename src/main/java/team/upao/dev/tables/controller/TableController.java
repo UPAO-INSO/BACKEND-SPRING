@@ -2,6 +2,7 @@ package team.upao.dev.tables.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 import team.upao.dev.tables.service.TableService;
 
+@PreAuthorize("hasAnyRole('MESERO','CAJERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("/tables")
 @RequiredArgsConstructor

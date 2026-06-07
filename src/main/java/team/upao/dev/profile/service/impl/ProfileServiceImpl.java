@@ -15,6 +15,7 @@ import team.upao.dev.profile.dto.ProfileResponseDto;
 import team.upao.dev.profile.service.ProfileService;
 import team.upao.dev.users.model.UserModel;
 import team.upao.dev.users.repository.IUserRepository;
+import team.upao.dev.users.enums.UserRole;
 
 @Service
 @RequiredArgsConstructor
@@ -31,22 +32,24 @@ public class ProfileServiceImpl implements ProfileService {
     }
 
     private ProfileResponseDto toDto(UserModel user, EmployeeModel employee) {
+        UserRole role = user.getRole();
         return ProfileResponseDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .role(user.getRole())
+                .role(role != null ? role.name() : null)
                 .lastLogin(user.getLastLogin())
                 .isActive(user.getIsActive())
                 .name(employee != null ? employee.getName() : null)
                 .lastname(employee != null ? employee.getLastname() : null)
                 .phone(employee != null ? employee.getPhone() : null)
                 .jobTitle(employee != null && employee.getJob() != null
-                        ? employee.getJob().getTitle() : null)
+                        ? employee.getJob().getTitle().name() : null)
                 .build();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ProfileResponseDto getProfile() {
         UserModel user = currentUser();
         EmployeeModel employee = employeeRepository.findFirstByUser_Id(user.getId()).orElse(null);

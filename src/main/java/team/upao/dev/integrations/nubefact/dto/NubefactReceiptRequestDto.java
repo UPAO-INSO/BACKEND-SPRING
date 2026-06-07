@@ -31,6 +31,11 @@ public class NubefactReceiptRequestDto {
     private String serie;
     @NotNull
     private Integer numero;
+    @JsonProperty("codigo_unico")
+    private String codigoUnico;
+    /** ID del pago en nuestra BD — se excluye del JSON enviado a Nubefact */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Long paymentId;
     @JsonProperty("sunat_transaction")
     @NotNull
     private Integer sunatTransaction;

@@ -15,6 +15,7 @@ public interface PaymentService {
     PaymentResponseDto findById(Long id);
     PaymentModel findModelById(Long id);
     PaymentModel findModelByOrderIdInPayment(UUID orderId);
+    java.util.Optional<PaymentResponseDto> findByOrderId(UUID orderId);
     PaginationResponseDto<PaymentResponseDto> findAll(PaginationRequestDto paginationRequestDto, String status, PaymentType paymentType);
     PaymentResponseDto update(Long id, PaymentRequestDto paymentResponseDto);
     PaymentResponseDto update(PaymentModel paymentModel);

@@ -1,3 +1,5 @@
+name: pds
+
 services:
   app:
     build: .

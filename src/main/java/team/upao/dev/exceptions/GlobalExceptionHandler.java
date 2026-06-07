@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import java.time.LocalDateTime;
@@ -72,10 +73,13 @@ public class GlobalExceptionHandler {
         return buildResponseEntity(new ApiError(HttpStatus.BAD_REQUEST, specificMsg, request.getDescription(false)));
     }
 
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiError> handleNoResourceFound(NoResourceFoundException ex, WebRequest request) {
+        return buildResponseEntity(new ApiError(HttpStatus.NOT_FOUND, "Recurso no encontrado: " + ex.getResourcePath(), request.getDescription(false)));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleGenericException(Exception ex, WebRequest request) {
-        // Recordar cambiar el mensaje de error para no ser específico
-        // return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno en el servidor.", request.getDescription(false)));
         return buildResponseEntity(new ApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno: " + ex.getMessage(), request.getDescription(false)));
     }
 

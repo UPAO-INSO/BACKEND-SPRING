@@ -2,6 +2,7 @@ package team.upao.dev.payments.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.dto.PaginationRequestDto;
@@ -11,6 +12,9 @@ import team.upao.dev.payments.dto.PaymentResponseDto;
 import team.upao.dev.payments.enums.PaymentType;
 import team.upao.dev.payments.service.PaymentService;
 
+import java.util.UUID;
+
+@PreAuthorize("hasAnyRole('CAJERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("payments")
@@ -43,5 +47,13 @@ public class PaymentController {
     @DeleteMapping("{id}")
     public ResponseEntity<String> delete(@PathVariable Long id) {
         return ResponseEntity.ok(paymentService.delete(id));
+    }
+
+    /** Devuelve el pago asociado a una orden, o 404 si no existe */
+    @GetMapping("by-order/{orderId}")
+    public ResponseEntity<PaymentResponseDto> findByOrderId(@PathVariable UUID orderId) {
+        return paymentService.findByOrderId(orderId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 }

@@ -13,6 +13,7 @@ public interface CustomerService extends BaseService<CustomerRequestRequestDto, 
     CustomerResponseDto findByEmail(String email);
     CustomerResponseDto findByPhone(String phone);
     List<CustomerResponseDto> findByDocument(String document);
+    List<CustomerResponseDto> searchByName(String name);
     CustomerModel findModelById(Long id);
     CustomerModel findModelByCustomerIdInPayment(Long id);
 }

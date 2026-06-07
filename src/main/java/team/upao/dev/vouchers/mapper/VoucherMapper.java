@@ -14,7 +14,20 @@ public class VoucherMapper {
     public VoucherResponseDto toDto(VoucherModel voucherModel) {
         return VoucherResponseDto.builder()
                 .id(voucherModel.getId())
+                .series(voucherModel.getSeries())
+                .number(voucherModel.getNumber())
+                .voucherType(voucherModel.getVoucherType())
+                .issuedAt(voucherModel.getIssuedAt())
+                .totalGravada(voucherModel.getTotalGravada())
+                .totalIgv(voucherModel.getTotalIgv())
+                .total(voucherModel.getTotal())
+                .igvPercentage(voucherModel.getIgvPercentage())
+                .currency(voucherModel.getCurrency() != null ? voucherModel.getCurrency().name() : "PEN")
+                .observations(voucherModel.getObservations())
                 .pdfUrl(voucherModel.getPdfUrl())
+                .xmlUrl(voucherModel.getXmlUrl())
+                .qrCodeString(voucherModel.getQrCodeString())
+                .paymentId(voucherModel.getPaymentModel() != null ? voucherModel.getPaymentModel().getId() : null)
                 .build();
     }
 

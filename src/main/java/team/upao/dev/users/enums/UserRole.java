@@ -1,7 +1,9 @@
 package team.upao.dev.users.enums;
 
 public enum UserRole {
-    ADMIN,
-    USER,
-    SUPER_USER
+    GERENTE,
+    CAJERO,
+    COCINERO,
+    MESERO,
+    ADMINISTRADOR
 }

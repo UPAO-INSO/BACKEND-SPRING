@@ -1,6 +1,7 @@
 package team.upao.dev.products.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.common.controller.BaseController;
@@ -14,6 +15,7 @@ import team.upao.dev.products.service.ProductService;
 import java.util.List;
 import java.util.Map;
 
+@PreAuthorize("hasAnyRole('MESERO','CAJERO','COCINERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequestMapping("/products")
 @RequiredArgsConstructor
@@ -41,7 +43,8 @@ public class ProductController extends BaseController<ProductRequestDto, Product
     }
 
     @GetMapping("/by-product-type/{productTypeId}")
-    public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(@PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
+    public ResponseEntity<PaginationResponseDto<ProductResponseDto>> findAllByProductTypeId(
+            @PathVariable Long productTypeId, @ModelAttribute PaginationRequestDto requestDto) {
         return ResponseEntity.ok(productService.findAllByProductTypeId(productTypeId, requestDto));
     }
 
@@ -55,7 +58,6 @@ public class ProductController extends BaseController<ProductRequestDto, Product
         int updated = productService.syncImagesFromS3();
         return ResponseEntity.ok(Map.of(
                 "message", "Sincronización completada",
-                "updatedProducts", updated
-        ));
+                "updatedProducts", updated));
     }
 }

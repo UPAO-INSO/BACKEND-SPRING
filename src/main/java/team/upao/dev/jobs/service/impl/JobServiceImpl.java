@@ -25,6 +25,7 @@ public class JobServiceImpl implements JobService {
 
     public Double getSalaryByJobTitle(JobModel job) {
         return switch (job.getTitle()) {
+            case ADMINISTRADOR -> 6000.0;
             case GERENTE -> 5000.0;
             case CAJERO -> 1500.0;
             case COCINERO -> 1600.0;

@@ -2,6 +2,7 @@ package team.upao.dev.inventory.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import team.upao.dev.inventory.dto.ProductInventoryUpdateDto;
 import team.upao.dev.inventory.service.ProductInventoryService;
 import java.util.List;
 
+@PreAuthorize("hasAnyRole('GERENTE','COCINERO','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/product-inventory")

@@ -49,6 +49,9 @@ import team.upao.dev.products.service.ProductService;
 import team.upao.dev.tables.enums.TableStatus;
 import team.upao.dev.tables.model.TableModel;
 import team.upao.dev.tables.service.TableService;
+import team.upao.dev.websocket.dto.WsOrderEvent;
+import team.upao.dev.websocket.dto.WsTableEvent;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -61,9 +64,9 @@ public class OrderServiceImpl implements OrderService {
     private final EmployeeService employeeService;
     private final ProductOrderMapper productOrderMapper;
 
-    // NUEVOS INYECTADOS
     private final ProductInventoryService productInventoryService;
     private final InventoryService inventoryService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private BigDecimal resolveUnitPrice(ProductOrderModel productOrderModel) {
         if (productOrderModel == null) return BigDecimal.ZERO;
@@ -228,6 +231,10 @@ public class OrderServiceImpl implements OrderService {
         // Descontar inventario al crear la orden
         this.deductInventoryForOrder(saved);
 
+        // Notificar en tiempo real
+        publishOrderEvent("ORDER_CREATED", saved);
+        publishTableEvent("TABLE_STATUS_CHANGED", saved.getTable().getId(), TableStatus.OCCUPIED.name());
+
         return orderMapper.toDto(saved);
     }
 
@@ -270,6 +277,10 @@ public class OrderServiceImpl implements OrderService {
         po.setServedQuantity(newServedQuantity);
 
         OrderModel saved = orderRepository.save(order);
+
+        // Notificar en tiempo real
+        publishOrderEvent("PRODUCT_SERVED", saved);
+
         return orderMapper.toDto(saved);
     }
 
@@ -516,6 +527,9 @@ public class OrderServiceImpl implements OrderService {
         // Ajustar inventario según las diferencias
         adjustInventoryForOrderUpdate(previousQuantities, newQuantities);
 
+        // Notificar en tiempo real
+        publishOrderEvent("ORDER_UPDATED", saved);
+
         return orderMapper.toDto(saved);
     }
 
@@ -644,7 +658,15 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setOrderStatus(newStatus);
-        return orderMapper.toDto(orderRepository.save(order));
+        OrderModel saved = orderRepository.save(order);
+
+        // Notificar en tiempo real
+        publishOrderEvent("ORDER_STATUS_CHANGED", saved);
+        if (newStatus.equals(OrderStatus.PAID) || newStatus.equals(OrderStatus.COMPLETED)) {
+            publishTableEvent("TABLE_STATUS_CHANGED", saved.getTable().getId(), TableStatus.AVAILABLE.name());
+        }
+
+        return orderMapper.toDto(saved);
     }
 
     @Override
@@ -717,6 +739,37 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception e) {
             log.error("Error inesperado en deducción: {}", e.getMessage());
             throw new RuntimeException("Error al procesar deducción de inventario", e);
+        }
+    }
+
+    // ── WebSocket helpers ─────────────────────────────────────────
+
+    private void publishOrderEvent(String type, OrderModel order) {
+        try {
+            WsOrderEvent event = WsOrderEvent.builder()
+                    .type(type)
+                    .orderId(order.getId() != null ? order.getId().toString() : null)
+                    .tableId(order.getTable() != null ? order.getTable().getId().intValue() : null)
+                    .orderStatus(order.getOrderStatus() != null ? order.getOrderStatus().name() : null)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/orders", event);
+            log.debug("WS published {} for order {}", type, event.getOrderId());
+        } catch (Exception e) {
+            log.warn("No se pudo publicar evento WS {}: {}", type, e.getMessage());
+        }
+    }
+
+    private void publishTableEvent(String type, Long tableId, String status) {
+        try {
+            WsTableEvent event = WsTableEvent.builder()
+                    .type(type)
+                    .tableId(tableId)
+                    .tableStatus(status)
+                    .build();
+            messagingTemplate.convertAndSend("/topic/tables", event);
+            log.debug("WS published {} for table {}", type, tableId);
+        } catch (Exception e) {
+            log.warn("No se pudo publicar evento WS {}: {}", type, e.getMessage());
         }
     }
 }

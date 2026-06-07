@@ -1,6 +1,7 @@
 package team.upao.dev.customers.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import team.upao.dev.customers.dto.CustomerRequestRequestDto;
@@ -11,6 +12,7 @@ import team.upao.dev.common.service.BaseService;
 
 import java.util.List;
 
+@PreAuthorize("hasAnyRole('MESERO','CAJERO','COCINERO','GERENTE','ADMINISTRADOR')")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("customers")
@@ -20,6 +22,11 @@ public class CustomerController extends BaseController<CustomerRequestRequestDto
     @Override
     protected BaseService<CustomerRequestRequestDto, CustomerResponseDto, Long> getService() {
         return customerService;
+    }
+
+    @GetMapping("/search")
+    public List<CustomerResponseDto> searchByName(@RequestParam String q) {
+        return customerService.searchByName(q);
     }
 
     @GetMapping("/email/{email}")

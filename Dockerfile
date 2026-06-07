@@ -9,7 +9,7 @@ RUN apt-get update -qq && apt-get install -y -qq zip --no-install-recommends \
 
 COPY pom.xml ./
 # Descarga dependencias y parchea culqi-java en el cache antes de compilar
-RUN --mount=type=cache,id=maven-cache,target=/root/.m2 mvn -B dependency:go-offline \
+RUN mvn -B dependency:go-offline \
     && CULQI_JAR=$(find /root/.m2/repository -name "culqi-java-v2.0.4.jar" 2>/dev/null | head -1) \
     && if [ -n "$CULQI_JAR" ]; then \
         jar tf "$CULQI_JAR" 2>/dev/null \
@@ -20,7 +20,7 @@ RUN --mount=type=cache,id=maven-cache,target=/root/.m2 mvn -B dependency:go-offl
     fi
 
 COPY src ./src
-RUN --mount=type=cache,id=maven-cache,target=/root/.m2 mvn -B clean package -DskipTests
+RUN mvn -B clean package -DskipTests
 
 # Etapa 2: Ejecución
 FROM eclipse-temurin:21-jdk

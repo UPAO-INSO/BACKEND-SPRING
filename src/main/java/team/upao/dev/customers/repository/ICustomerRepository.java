@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import team.upao.dev.customers.model.CustomerModel;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -13,6 +14,7 @@ public interface ICustomerRepository extends JpaRepository<CustomerModel, Long> 
     Optional<CustomerModel> findByEmail(String email);
     Optional<CustomerModel> findByPhone(String phone);
     Optional<CustomerModel> findByDocumentNumberContaining(String documentNumber);
+    List<CustomerModel> findByNameContainingIgnoreCase(String name);
     @Query("SELECT c FROM CustomerModel c" +
             " LEFT JOIN PaymentModel p ON c.id = p.customer.id " +
             " WHERE c.id = :customerId")

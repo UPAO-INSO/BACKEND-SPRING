@@ -22,6 +22,11 @@ public class CustomerController extends BaseController<CustomerRequestRequestDto
         return customerService;
     }
 
+    @GetMapping("/search")
+    public List<CustomerResponseDto> searchByName(@RequestParam String q) {
+        return customerService.searchByName(q);
+    }
+
     @GetMapping("/email/{email}")
     public CustomerResponseDto findByEmail(@PathVariable String email) {
         return customerService.findByEmail(email);

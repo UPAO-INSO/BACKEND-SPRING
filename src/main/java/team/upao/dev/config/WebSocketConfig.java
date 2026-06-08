@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOrigins("http://localhost:4200", "https://punto-de-sal.netlify.app")
+                .setAllowedOrigins("http://localhost:4200", "https://punto-de-sal.netlify.app", "https://punto-de-sal.up.railway.app")
                 .withSockJS();
     }
 

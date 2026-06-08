@@ -23,7 +23,7 @@ COPY src ./src
 RUN mvn -B clean package -DskipTests
 
 # Etapa 2: Ejecución
-FROM eclipse-temurin:21-jdk
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
@@ -31,4 +31,10 @@ COPY --from=build /app/target/*.jar /app/punto_de_sal.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-jar", "/app/punto_de_sal.jar"]
+ENTRYPOINT ["java", \
+  "-XX:MaxRAMPercentage=60.0", \
+  "-XX:InitialRAMPercentage=25.0", \
+  "-XX:+UseG1GC", \
+  "-XX:+OptimizeStringConcat", \
+  "-Djava.security.egd=file:/dev/./urandom", \
+  "-jar", "/app/punto_de_sal.jar"]

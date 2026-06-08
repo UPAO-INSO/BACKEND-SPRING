@@ -2,9 +2,12 @@ package team.upao.dev.customers.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import team.upao.dev.customers.dto.CustomerRequestRequestDto;
 import team.upao.dev.customers.dto.CustomerResponseDto;
 import team.upao.dev.customers.enums.DocumentType;
@@ -95,7 +98,16 @@ public class CustomerServiceImpl implements CustomerService {
         client.setEmail(clientRequestDto.getEmail());
         client.setPhone(clientRequestDto.getPhone());
 
-        return  customerMapper.toDto(customerRepository.save(client));
+        if (clientRequestDto.getDocumentNumber() != null && !clientRequestDto.getDocumentNumber().isBlank()) {
+            client.setDocumentNumber(clientRequestDto.getDocumentNumber());
+            client.setDocumentType(this.choiceDocumentType(clientRequestDto.getDocumentNumber()));
+        }
+        if (clientRequestDto.getDepartment() != null) client.setDepartament(clientRequestDto.getDepartment());
+        if (clientRequestDto.getProvince() != null)   client.setProvince(clientRequestDto.getProvince());
+        if (clientRequestDto.getDistrict() != null)   client.setDistrict(clientRequestDto.getDistrict());
+        if (clientRequestDto.getCompleteAddress() != null) client.setCompleteAddress(clientRequestDto.getCompleteAddress());
+
+        return customerMapper.toDto(customerRepository.save(client));
     }
 
     @Override
@@ -106,8 +118,14 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public String delete(Long id) {
         CustomerModel customer = findModelById(id);
-        customerRepository.delete(customer);
-        return "Client with id " + id + " deleted successfully";
+        try {
+            customerRepository.delete(customer);
+            customerRepository.flush();
+            return "Client with id " + id + " deleted successfully";
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "El cliente tiene registros asociados y no puede eliminarse");
+        }
     }
 
     @Override
